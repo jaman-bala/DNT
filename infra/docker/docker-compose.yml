@@ -1,0 +1,108 @@
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - ../envs/.env
+    ports:
+      - "5444:5432"
+    networks:
+      - backend-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+
+  app:
+    container_name: backend
+    restart: always
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile
+      target: development
+    volumes:
+      - media:/app/src/media
+      - static:/app/src/staticfiles
+      - ../../src:/app/src
+    env_file:
+      - ../envs/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8044:8000"
+    networks:
+      - backend-network
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    container_name: minio
+    restart: always
+    env_file:
+      - ../envs/.env
+    ports:
+      - "9000:9000"  # S3 API
+      - "9001:9001"  # веб-консоль
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD-SHELL", "(curl -f http://localhost:9000/minio/health/live) || (mc ready local)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - backend-network
+
+#  rabbitmq:
+#    image: rabbitmq:3-management
+#    container_name: rabbitmq
+#   restart: always
+#    ports:
+#      - '5673:5672'     # AMQP port for Celery broker
+#      - '15673:15672'   # Management UI
+#    env_file:
+#      - ../envs/.env
+#    volumes:
+#      - rabbitmq_data:/var/lib/rabbitmq
+#    healthcheck:
+#      test: [ "CMD", "rabbitmqctl", "status" ]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 3
+#    networks:
+#      - backend-network
+
+  redis:
+    container_name: redis
+    image: redis:7-alpine
+    ports:
+      - "6344:6379"
+    networks:
+      - backend-network
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+
+volumes:
+  postgres_data:
+  media:
+  static:
+  minio-data:
+#  rabbitmq_data:
+
+networks:
+  backend-network:
+    driver: bridge
