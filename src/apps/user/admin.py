@@ -19,7 +19,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
     ordering = ("-date_joined",)
 
     fieldsets = (
-        (None, {"fields": ("phone", "password")}),
+        (None, {"fields": ("phone",)}),
         (
             "Personal info",
             {
