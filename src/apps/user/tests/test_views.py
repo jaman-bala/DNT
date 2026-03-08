@@ -39,18 +39,14 @@ class UserAPITestCase(TestCase):
             "middle_name": "New",
         }
 
-        response = self.client.post(
-            "/api/v1/auth/register", data=new_user_data
-        )
+        response = self.client.post("/api/v1/auth/register", data=new_user_data)
 
         self.assertEqual(response.status_code, 200)
         self.assertTrue(User.objects.filter(phone="+996500000001").exists())
 
     def test_user_registration_duplicate_phone(self):
         """Test user registration with duplicate phone"""
-        response = self.client.post(
-            "/api/v1/auth/register", data=self.user_data
-        )
+        response = self.client.post("/api/v1/auth/register", data=self.user_data)
 
         self.assertEqual(response.status_code, 400)
 
@@ -99,7 +95,12 @@ class UserAPITestCase(TestCase):
         refresh = RefreshToken.for_user(self.user)
         access_token = str(refresh.access_token)
 
-        update_data = {"first_name": "Updated", "last_name": "User", "middle_name": "Updated", "email": "updated@example.com"}
+        update_data = {
+            "first_name": "Updated",
+            "last_name": "User",
+            "middle_name": "Updated",
+            "email": "updated@example.com",
+        }
 
         response = self.client.put(
             "/api/v1/users/me",

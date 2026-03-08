@@ -1,15 +1,12 @@
-import uuid
-
-
+from apps.user.managers import UserManager
+from apps.user.utils.password import is_password_change_required
+from config.base.base_model import BaseModel
 from django.db import models
 from django.utils import timezone
 
-from apps.user.managers import UserManager
-from config.base.base_model import BaseModel
-
 
 class User(BaseModel):
-    first_name   = models.CharField("First name", max_length=150, blank=True, null=True)
+    first_name = models.CharField("First name", max_length=150, blank=True, null=True)
     last_name = models.CharField("Last name", max_length=150, blank=True, null=True)
     middle_name = models.CharField("Middle name", max_length=150, blank=True, null=True)
     email = models.EmailField("Email", blank=True, null=True)
@@ -20,7 +17,9 @@ class User(BaseModel):
     can_activate = models.BooleanField("Can Activate", default=False)
     date_joined = models.DateTimeField("Date joined", default=timezone.now)
     last_login = models.DateTimeField("Last login", blank=True, null=True)
-    password_changed_at = models.DateTimeField("Password changed at", default=timezone.now)
+    password_changed_at = models.DateTimeField(
+        "Password changed at", default=timezone.now
+    )
 
     USERNAME_FIELD = "phone"
     REQUIRED_FIELDS = []  # type: ignore
@@ -37,6 +36,11 @@ class User(BaseModel):
     def get_short_name(self) -> str:
         """Return the short name for the user."""
         return self.phone
+
+    @property
+    def password_change_required(self) -> bool:
+        """Returns True if the user is required to change their password."""
+        return is_password_change_required(self)
 
     class Meta:
         verbose_name = "User"

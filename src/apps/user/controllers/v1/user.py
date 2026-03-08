@@ -1,16 +1,19 @@
-from ninja import File, Form, Router
-from ninja.errors import HttpError
-from ninja.files import UploadedFile
+import uuid
 
 from apps.user.dto.schemas import (
     ChangePasswordDTO,
     UserResponseDTO,
     UserUpdateFormDataDTO,
 )
-from apps.user.models.users import User
+from apps.user.exceptions import UserError, UserNotFoundError
+from apps.user.filters import UserFilterSchema
 from apps.user.services.user_service import UserService
-from apps.user.utils.password import is_password_change_required
 from config.auth.authentication import UnifiedJWTAuthentication
+from config.pagination import CustomPagination
+from ninja import File, Form, Query, Router
+from ninja.errors import HttpError
+from ninja.files import UploadedFile
+from ninja.pagination import paginate
 
 router = Router(tags=["User"])
 
@@ -26,28 +29,28 @@ def update_current_user(
 ):
     """Update current user profile with form data and optional profile image upload"""
     try:
-        data = UserUpdateFormDataDTO(email=email, first_name=first_name, last_name=last_name, middle_name=middle_name)
-        user = UserService.update_user_with_file(request.user, data, profile_image)
-        response = UserResponseDTO.model_validate(user)
-        response.password_change_required = is_password_change_required(user)
-        return response
-    except ValueError as e:
+        data = UserUpdateFormDataDTO(
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            middle_name=middle_name,
+        )
+        user = UserService().update_user_with_file(request.user, data, profile_image)
+        return user
+    except UserError as e:
         raise HttpError(400, str(e)) from e
+    except Exception as e:
+        raise HttpError(500, f"Internal server error: {str(e)}") from e
 
 
 @router.get("/", response=list[UserResponseDTO], auth=UnifiedJWTAuthentication())
-def list_users(request):
+@paginate(CustomPagination)
+def list_users(request, filters: UserFilterSchema = Query(...)):
     """List all users (admin only)"""
     if not request.user.is_staff:
         raise HttpError(403, "Admin access required")
 
-    users = User.objects.all()
-    response_list = []
-    for user in users:
-        dto = UserResponseDTO.model_validate(user)
-        dto.password_change_required = is_password_change_required(user)
-        response_list.append(dto)
-    return response_list
+    return UserService().get_all_users(filters=filters)
 
 
 @router.post("change-password", auth=UnifiedJWTAuthentication())
@@ -61,7 +64,36 @@ def change_password(
         data = ChangePasswordDTO(
             new_password=new_password, confirm_password=confirm_password
         )
-        UserService.change_password(request.user, data)
+        UserService().change_password(request.user, data)
         return {"detail": "Password changed successfully"}
-    except ValueError as e:
+    except UserError as e:
         raise HttpError(400, str(e)) from e
+    except Exception as e:
+        raise HttpError(500, f"Internal server error: {str(e)}") from e
+
+
+@router.post("{user_id}/change-password", auth=UnifiedJWTAuthentication())
+def change_user_password(
+    request,
+    user_id: uuid.UUID,
+    new_password: str = Form(...),
+    confirm_password: str = Form(...),
+):
+    """Change user's password by ID (admin only)"""
+    if not request.user.is_staff:
+        raise HttpError(403, "Admin access required")
+
+    try:
+        service = UserService()
+        user = service.get_user_by_id(user_id)
+        data = ChangePasswordDTO(
+            new_password=new_password, confirm_password=confirm_password
+        )
+        service.change_password(user, data)
+        return {"detail": "Password changed successfully"}
+    except UserNotFoundError as e:
+        raise HttpError(404, str(e)) from e
+    except UserError as e:
+        raise HttpError(400, str(e)) from e
+    except Exception as e:
+        raise HttpError(500, f"Internal server error: {str(e)}") from e

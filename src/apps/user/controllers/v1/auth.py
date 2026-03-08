@@ -1,11 +1,3 @@
-from django.conf import settings
-from django.contrib.auth import authenticate
-from django.http import JsonResponse
-from ninja import File, Form, Router
-from ninja.errors import HttpError
-from ninja.files import UploadedFile
-from rest_framework_simplejwt.tokens import RefreshToken
-
 from apps.user.dto.schemas import (
     LoginRequestDTO,
     LoginResponseDTO,
@@ -14,9 +6,18 @@ from apps.user.dto.schemas import (
     UserFormDataDTO,
     UserResponseDTO,
 )
+from apps.user.exceptions import UserError
+from apps.user.services.blacklist_service import BlacklistService
 from apps.user.services.user_service import UserService
 from apps.user.utils.password import is_password_change_required
 from config.auth.authentication import UnifiedJWTAuthentication
+from django.conf import settings
+from django.contrib.auth import authenticate
+from django.http import JsonResponse
+from ninja import File, Form, Router
+from ninja.errors import HttpError
+from ninja.files import UploadedFile
+from rest_framework_simplejwt.tokens import RefreshToken
 
 router = Router(tags=["Authentication and Authorization"])
 
@@ -42,12 +43,12 @@ def register_user(
             last_name=last_name,
             middle_name=middle_name,
         )
-        user = UserService.create_user_with_file(data, profile_image)
-        response = UserResponseDTO.model_validate(user)
-        response.password_change_required = is_password_change_required(user)
-        return response
-    except ValueError as e:
+        user = UserService().create_user_with_file(data, profile_image)
+        return user
+    except UserError as e:
         raise HttpError(400, str(e)) from e
+    except Exception as e:
+        raise HttpError(500, f"Internal server error: {str(e)}") from e
 
 
 @router.post("/login", response=LoginResponseDTO)
@@ -89,15 +90,40 @@ def refresh_token(request, data: RefreshRequestDTO):
 @router.get("/me", response=UserResponseDTO, auth=UnifiedJWTAuthentication())
 def get_current_user(request):
     """Get current authenticated user"""
-    user = request.user
-    response = UserResponseDTO.model_validate(user)
-    response.password_change_required = is_password_change_required(user)
-    return response
+    return request.user
 
 
-@router.post("/logout")
+@router.post("/logout", auth=UnifiedJWTAuthentication())
 def logout(request):
-    """Logout user and clear cookies"""
+    """Logout user, blacklist tokens and clear cookies"""
+    # 1. Blacklist Access Token
+    access_token_str = request.auth
+    if access_token_str:
+        try:
+            from rest_framework_simplejwt.tokens import AccessToken
+
+            access_token = AccessToken(access_token_str)
+            BlacklistService.add_to_blacklist(
+                access_token["jti"], access_token.payload["exp"]
+            )
+        except Exception:
+            pass
+
+    # 2. Blacklist Refresh Token if present in cookies
+    refresh_token_str = request.COOKIES.get(
+        settings.SIMPLE_JWT.get("AUTH_COOKIE_REFRESH", "refresh_token")
+    )
+    if refresh_token_str:
+        try:
+            from rest_framework_simplejwt.tokens import RefreshToken
+
+            refresh_token = RefreshToken(refresh_token_str)
+            BlacklistService.add_to_blacklist(
+                refresh_token["jti"], refresh_token.payload["exp"]
+            )
+        except Exception:
+            pass
+
     response = JsonResponse({"message": "Successfully logged out"})
 
     response.delete_cookie(settings.SIMPLE_JWT["AUTH_COOKIE"])

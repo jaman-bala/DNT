@@ -1,14 +1,5 @@
 import uuid
 
-import boto3
-from botocore.exceptions import ClientError
-from django.conf import settings
-from django.utils import timezone
-from django.contrib.auth.hashers import make_password
-from django.core.exceptions import ValidationError
-from django.db import IntegrityError
-from ninja.files import UploadedFile
-
 from apps.user.dto.schemas import (
     ChangePasswordDTO,
     UserFormDataDTO,
@@ -16,20 +7,36 @@ from apps.user.dto.schemas import (
     UserUpdateDTO,
     UserUpdateFormDataDTO,
 )
+from apps.user.exceptions import (
+    FileUploadError,
+    InvalidPasswordError,
+    UserAlreadyExistsError,
+    UserError,
+    UserNotFoundError,
+)
 from apps.user.models.users import User
+from config.base.base_service import BaseService
+from django.conf import settings
+from django.contrib.auth.hashers import make_password
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
+from django.utils import timezone
+from ninja.files import UploadedFile
 
 
-class UserService:
+class UserService(BaseService):
     """Service layer for user-related business logic"""
 
-    @staticmethod
-    def create_user(data: UserRequestDTO) -> User:
+    def __init__(self):
+        super().__init__()
+
+    def create_user(self, data: UserRequestDTO) -> User:
         """Create a new user with validation"""
         if User.objects.filter(phone=data.phone).exists():
-            raise ValueError("Phone number already exists")
+            raise UserAlreadyExistsError(f"Phone number {data.phone} already exists")
 
-        if User.objects.filter(email=data.email).exists():
-            raise ValueError("Email already exists")
+        if data.email and User.objects.filter(email=data.email).exists():
+            raise UserAlreadyExistsError(f"Email {data.email} already exists")
 
         try:
             user = User.objects.create(
@@ -44,24 +51,23 @@ class UserService:
             )
             return user
         except IntegrityError as e:
-            raise ValueError(f"Failed to create user: {str(e)}") from e
+            raise UserError(f"Failed to create user: {str(e)}") from e
 
-    @staticmethod
     def create_user_with_file(
-        data: UserFormDataDTO, profile_image: UploadedFile | None = None
+        self, data: UserFormDataDTO, profile_image: UploadedFile | None = None
     ) -> User:
         """Create a new user with form data and file upload to MinIO"""
         if User.objects.filter(phone=data.phone).exists():
-            raise ValueError("Phone number already exists")
+            raise UserAlreadyExistsError(f"Phone number {data.phone} already exists")
 
-        if User.objects.filter(email=data.email).exists():
-            raise ValueError("Email already exists")
+        if data.email and User.objects.filter(email=data.email).exists():
+            raise UserAlreadyExistsError(f"Email {data.email} already exists")
 
         try:
             # Upload image to MinIO if provided
             image_url = None
             if profile_image:
-                image_url = UserService._upload_to_minio(profile_image)
+                image_url = self._upload_to_minio(profile_image)
 
             user = User.objects.create(
                 phone=data.phone,
@@ -75,62 +81,43 @@ class UserService:
             )
             return user
         except IntegrityError as e:
-            raise ValueError(f"Failed to create user: {str(e)}") from e
+            raise UserError(f"Failed to create user: {str(e)}") from e
 
-    @staticmethod
-    def _upload_to_minio(file: UploadedFile) -> str:
+    def _upload_to_minio(self, file: UploadedFile) -> str:
         """Upload file to MinIO and return the URL"""
         try:
-            # Initialize MinIO client
-            s3_client = boto3.client(
-                "s3",
-                endpoint_url=settings.AWS_S3_ENDPOINT_URL,
-                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-                region_name=settings.AWS_S3_REGION_NAME,
-            )
+            client = self.s3_client.get_client()
 
-            # Create bucket if it doesn't exist
+            # Ensure bucket exists (ideally this should be done once during app startup)
             try:
-                s3_client.head_bucket(Bucket=settings.AWS_STORAGE_BUCKET_NAME)
-            except ClientError as e:
-                error_code = e.response["Error"]["Code"]
-                if error_code == "404":
-                    # Bucket doesn't exist, create it
-                    s3_client.create_bucket(Bucket=settings.AWS_STORAGE_BUCKET_NAME)
-                elif error_code == "403":
-                    # Bucket exists but no access
-                    pass
-                else:
-                    raise e
+                client.head_bucket(Bucket=settings.AWS_STORAGE_BUCKET_NAME)
+            except Exception:
+                client.create_bucket(Bucket=settings.AWS_STORAGE_BUCKET_NAME)
 
             # Generate unique filename
             file_extension = file.name.split(".")[-1] if "." in file.name else "jpg"
             filename = f"profile_images/{uuid.uuid4()}.{file_extension}"
 
             # Upload file
-            s3_client.upload_fileobj(
+            client.upload_fileobj(
                 file,
                 settings.AWS_STORAGE_BUCKET_NAME,
                 filename,
                 ExtraArgs={"ContentType": file.content_type or "image/jpeg"},
             )
 
-            # Return the URL
-            return f"{settings.AWS_S3_ENDPOINT_URL}/{settings.AWS_STORAGE_BUCKET_NAME}/{filename}"
+            # Return the URL using helper
+            return self.s3_client.get_file_url(filename)
 
-        except ClientError as e:
-            raise ValueError(f"Failed to upload file to MinIO: {str(e)}") from e
         except Exception as e:
-            raise ValueError(f"File upload error: {str(e)}") from e
+            raise FileUploadError(f"File upload error: {str(e)}") from e
 
-    @staticmethod
-    def update_user(user: User, data: UserUpdateDTO) -> User:
+    def update_user(self, user: User, data: UserUpdateDTO) -> User:
         """Update user profile"""
         try:
             if data.email and data.email != user.email:
                 if User.objects.filter(email=data.email).exclude(id=user.id).exists():
-                    raise ValueError("Email already exists")
+                    raise UserAlreadyExistsError(f"Email {data.email} already exists")
                 user.email = data.email
 
             if data.first_name:
@@ -149,10 +136,10 @@ class UserService:
             user.save()
             return user
         except IntegrityError as e:
-            raise ValueError(f"Failed to update user: {str(e)}") from e
+            raise UserError(f"Failed to update user: {str(e)}") from e
 
-    @staticmethod
     def update_user_with_file(
+        self,
         user: User,
         data: UserUpdateFormDataDTO,
         profile_image: UploadedFile | None = None,
@@ -161,7 +148,7 @@ class UserService:
         try:
             if data.email and data.email != user.email:
                 if User.objects.filter(email=data.email).exclude(id=user.id).exists():
-                    raise ValueError("Email already exists")
+                    raise UserAlreadyExistsError(f"Email {data.email} already exists")
                 user.email = data.email
 
             if data.first_name:
@@ -172,49 +159,51 @@ class UserService:
                 user.middle_name = data.middle_name
 
             if profile_image:
-                image_url = UserService._upload_to_minio(profile_image)
+                image_url = self._upload_to_minio(profile_image)
                 user.profile_image = image_url
 
             user.save()
             return user
         except IntegrityError as e:
-            raise ValueError(f"Failed to update user: {str(e)}") from e
+            raise UserError(f"Failed to update user: {str(e)}") from e
 
-    @staticmethod
-    def get_user_by_id(user_id: uuid.UUID) -> User | None:
+    def get_all_users(self, filters=None):
+        """Get all users for admin list"""
+        qs = User.objects.all()
+        if filters:
+            qs = filters.filter(qs)
+        return qs
+
+    def get_user_by_id(self, user_id: uuid.UUID) -> User:
         """Get user by ID"""
         try:
             return User.objects.get(id=user_id)
         except User.DoesNotExist:
-            return None
+            raise UserNotFoundError(f"User with id {user_id} not found") from None
 
-    @staticmethod
-    def get_user_by_phone(phone: str) -> User | None:
+    def get_user_by_phone(self, phone: str) -> User:
         """Get user by phone"""
         try:
             return User.objects.get(phone=phone)
         except User.DoesNotExist:
-            return None
+            raise UserNotFoundError(f"User with phone {phone} not found") from None
 
-    @staticmethod
-    def deactivate_user(user: User) -> User:
+    def deactivate_user(self, user: User) -> User:
         """Deactivate user account"""
         user.is_active = False
         user.save()
         return user
 
-    @staticmethod
-    def activate_user(user: User) -> User:
+    def activate_user(self, user: User) -> User:
         """Activate user account"""
         user.is_active = True
         user.save()
         return user
 
-    @staticmethod
-    def change_password(user: User, data: ChangePasswordDTO) -> None:
+    def change_password(self, user: User, data: ChangePasswordDTO) -> None:
         """Change user's password"""
         if data.new_password != data.confirm_password:
-            raise ValueError("New passwords do not match")
+            raise InvalidPasswordError("New passwords do not match")
 
         try:
             user.set_password(data.new_password)
@@ -222,6 +211,6 @@ class UserService:
             user.full_clean()  # Validate the new password
             user.save()
         except ValidationError as e:
-            raise ValueError(f"Password validation error: {str(e)}") from e
+            raise InvalidPasswordError(f"Password validation error: {str(e)}") from e
         except Exception as e:
-            raise ValueError(f"Failed to change password: {str(e)}") from e
+            raise UserError(f"Failed to change password: {str(e)}") from e

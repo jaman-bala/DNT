@@ -1,9 +1,9 @@
 import uuid
-from django.contrib.auth import get_user_model
-from django.test import TestCase
 
 from apps.user.dto.schemas import UserRequestDTO, UserUpdateDTO
 from apps.user.services.user_service import UserService
+from django.contrib.auth import get_user_model
+from django.test import TestCase
 
 User = get_user_model()
 
@@ -77,7 +77,12 @@ class UserServiceTestCase(TestCase):
 
     def test_update_user(self):
         """Test user update"""
-        update_data = UserUpdateDTO(first_name="Updated", last_name="User", middle_name="Updated", email="updated@example.com")
+        update_data = UserUpdateDTO(
+            first_name="Updated",
+            last_name="User",
+            middle_name="Updated",
+            email="updated@example.com",
+        )
 
         updated_user = UserService.update_user(self.user, update_data)
 

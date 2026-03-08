@@ -5,18 +5,42 @@ from ninja import Field, Schema
 
 
 class UserRequestDTO(Schema):
-    phone: str = Field(..., min_length=3, max_length=150, description="Phone number", example="+996500500500")
-    email: str | None = Field(None, description="Email address", example="[EMAIL_ADDRESS]")
-    password: str = Field(..., min_length=8, description="Password", example="P@sSw0rd-312!")
-    first_name: str | None = Field(None, max_length=150, description="First name", example="Mirbek")
-    last_name: str | None = Field(None, max_length=150, description="Last name", example="Atabekov")
-    middle_name: str | None = Field(None, max_length=150, description="Middle name", example="Smith")
+    phone: str = Field(
+        ...,
+        min_length=3,
+        max_length=150,
+        description="Phone number",
+        example="+996500500500",
+    )
+    email: str | None = Field(
+        None, description="Email address", example="[EMAIL_ADDRESS]"
+    )
+    password: str = Field(
+        ..., min_length=8, description="Password", example="P@sSw0rd-312!"
+    )
+    first_name: str | None = Field(
+        None, max_length=150, description="First name", example="Mirbek"
+    )
+    last_name: str | None = Field(
+        None, max_length=150, description="Last name", example="Atabekov"
+    )
+    middle_name: str | None = Field(
+        None, max_length=150, description="Middle name", example="Smith"
+    )
     profile_image: str | None = Field(None, description="Profile image URL")
 
 
 class UserFormDataDTO(Schema):
-    phone: str = Field(..., min_length=3, max_length=150, description="Phone number", example="+996500500500")
-    email: str | None = Field(None, description="Email address", example="[EMAIL_ADDRESS]")
+    phone: str = Field(
+        ...,
+        min_length=3,
+        max_length=150,
+        description="Phone number",
+        example="+996500500500",
+    )
+    email: str | None = Field(
+        None, description="Email address", example="[EMAIL_ADDRESS]"
+    )
     password: str = Field(..., min_length=8, description="Password", example="password")
     first_name: str | None = Field(None, max_length=150, description="First name")
     last_name: str | None = Field(None, max_length=150, description="Last name")
@@ -33,7 +57,9 @@ class UserResponseDTO(Schema):
     profile_image: str | None = Field(None, description="Profile image URL")
     is_active: bool = Field(..., description="User active status")
     date_joined: datetime = Field(..., description="Registration date")
-    password_change_required: bool = Field(False, description="Is password change required")
+    password_change_required: bool = Field(
+        False, description="Is password change required"
+    )
 
 
 class UserUpdateDTO(Schema):
@@ -61,7 +87,9 @@ class LoginResponseDTO(Schema):
     access: str = Field(..., description="Access token")
     refresh: str = Field(..., description="Refresh token")
     last_login: datetime | None = Field(None, description="Last login date")
-    password_change_required: bool = Field(False, description="Is password change required")
+    password_change_required: bool = Field(
+        False, description="Is password change required"
+    )
 
 
 class RefreshRequestDTO(Schema):

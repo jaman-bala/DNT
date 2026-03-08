@@ -30,9 +30,27 @@ class Migration(migrations.Migration):
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
                 ("is_deleted", models.BooleanField(default=False)),
-                ("first_name", models.CharField(blank=True, max_length=150, null=True, verbose_name="First name")),
-                ("last_name", models.CharField(blank=True, max_length=150, null=True, verbose_name="Last name")),
-                ("middle_name", models.CharField(blank=True, max_length=150, null=True, verbose_name="Middle name")),
+                (
+                    "first_name",
+                    models.CharField(
+                        blank=True, max_length=150, null=True, verbose_name="First name"
+                    ),
+                ),
+                (
+                    "last_name",
+                    models.CharField(
+                        blank=True, max_length=150, null=True, verbose_name="Last name"
+                    ),
+                ),
+                (
+                    "middle_name",
+                    models.CharField(
+                        blank=True,
+                        max_length=150,
+                        null=True,
+                        verbose_name="Middle name",
+                    ),
+                ),
                 (
                     "email",
                     models.EmailField(
@@ -41,9 +59,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "phone",
-                    models.CharField(
-                        max_length=15, unique=True, verbose_name="Phone"
-                    ),
+                    models.CharField(max_length=15, unique=True, verbose_name="Phone"),
                 ),
                 (
                     "profile_image",
@@ -54,7 +70,12 @@ class Migration(migrations.Migration):
                         verbose_name="Profile image",
                     ),
                 ),
-                ("password_changed_at", models.DateTimeField("Password changed at", default=django.utils.timezone.now)),
+                (
+                    "password_changed_at",
+                    models.DateTimeField(
+                        "Password changed at", default=django.utils.timezone.now
+                    ),
+                ),
                 ("is_active", models.BooleanField(default=True, verbose_name="Active")),
                 ("is_staff", models.BooleanField(default=False)),
                 ("is_superuser", models.BooleanField(default=False)),

@@ -33,4 +33,5 @@ include(
     "conf/i18n.py",
     "conf/storage_aws.py",
     "conf/templates.py",
+    "conf/admin.py",
 )

@@ -1,7 +1,7 @@
-from ninja import NinjaAPI
 from apps.user.controllers.v1.auth import router as auth_router
 from apps.user.controllers.v1.user import router as user_router
 from config.auth.authentication import UnifiedJWTAuthentication
+from ninja import NinjaAPI
 
 # Create instance of the unified authentication class
 jwt_auth = UnifiedJWTAuthentication()

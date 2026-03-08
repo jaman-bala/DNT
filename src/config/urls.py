@@ -1,10 +1,8 @@
+from apps.user.controllers.v1.urls import api_v1
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path
-from ninja import NinjaAPI
-
-from apps.user.controllers.v1.urls import api_v1
 
 urlpatterns = [
     path("admin/", admin.site.urls),

@@ -1,6 +1,7 @@
 import logging
 
 import jwt
+from apps.user.services.blacklist_service import BlacklistService
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.http import HttpRequest
@@ -76,6 +77,11 @@ class UnifiedJWTAuthentication(HttpBearer):
                 settings.SIMPLE_JWT["SIGNING_KEY"],
                 algorithms=[settings.SIMPLE_JWT["ALGORITHM"]],
             )
+            jti = payload.get("jti")
+            if jti and BlacklistService.is_blacklisted(jti):
+                logger.warning(f"Token {jti} is blacklisted")
+                return None
+
             user_id = payload.get("user_id")
             if user_id:
                 return User.objects.get(id=user_id)
@@ -93,6 +99,11 @@ class UnifiedJWTAuthentication(HttpBearer):
                 settings.SIMPLE_JWT["SIGNING_KEY"],
                 algorithms=[settings.SIMPLE_JWT["ALGORITHM"]],
             )
+            jti = payload.get("jti")
+            if jti and BlacklistService.is_blacklisted(jti):
+                logger.warning(f"Refresh token {jti} is blacklisted")
+                return None, None
+
             user_id = payload.get("user_id")
             if user_id:
                 user = User.objects.get(id=user_id)
