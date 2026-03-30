@@ -1,9 +1,10 @@
 import uuid
 
-from apps.user.dto.schemas import UserRequestDTO, UserUpdateDTO
-from apps.user.services.user_service import UserService
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+
+from apps.user.dto.schemas import UserRequestDTO, UserUpdateDTO
+from apps.user.services.user_service import UserService
 
 User = get_user_model()
 

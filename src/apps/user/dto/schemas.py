@@ -1,7 +1,8 @@
-import uuid
+from uuid import UUID
 from datetime import datetime
 
 from ninja import Field, Schema
+from pydantic import ConfigDict
 
 
 class UserRequestDTO(Schema):
@@ -48,7 +49,7 @@ class UserFormDataDTO(Schema):
 
 
 class UserResponseDTO(Schema):
-    id: uuid.UUID = Field(..., description="User ID")
+    id: UUID = Field(..., description="User ID")
     phone: str = Field(..., description="Phone number")
     email: str | None = Field(None, description="Email address")
     first_name: str | None = Field(None, description="First name")
@@ -60,6 +61,8 @@ class UserResponseDTO(Schema):
     password_change_required: bool = Field(
         False, description="Is password change required"
     )
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserUpdateDTO(Schema):
@@ -90,6 +93,8 @@ class LoginResponseDTO(Schema):
     password_change_required: bool = Field(
         False, description="Is password change required"
     )
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RefreshRequestDTO(Schema):

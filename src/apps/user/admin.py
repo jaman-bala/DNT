@@ -1,7 +1,8 @@
-from apps.user.models.users import User
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from unfold.admin import ModelAdmin
+
+from apps.user.models.users import User
 
 
 @admin.register(User)

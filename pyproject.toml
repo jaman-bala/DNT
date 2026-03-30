@@ -1,7 +1,7 @@
 [project]
-name = "django-ninja-template"
+name = "dnt"
 version = "0.1.0"
-description = "Modern Django-Ninja template with best practices"
+description = "Modern Django-Ninja Template with best practices"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [

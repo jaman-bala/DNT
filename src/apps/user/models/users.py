@@ -1,11 +1,12 @@
-from apps.user.managers import UserManager
-from apps.user.utils.password import is_password_change_required
-from config.base.base_model import BaseModel
 from django.db import models
 from django.utils import timezone
 
+from apps.user.managers import UserManager
+from apps.user.utils.password import is_password_change_required
+from config.base.base_model import BaseAuthModel
 
-class User(BaseModel):
+
+class User(BaseAuthModel):
     first_name = models.CharField("First name", max_length=150, blank=True, null=True)
     last_name = models.CharField("Last name", max_length=150, blank=True, null=True)
     middle_name = models.CharField("Middle name", max_length=150, blank=True, null=True)
@@ -43,6 +44,6 @@ class User(BaseModel):
         return is_password_change_required(self)
 
     class Meta:
-        verbose_name = "User"
-        verbose_name_plural = "Users"
+        verbose_name = "Пользователь"
+        verbose_name_plural = "Пользователи"
         db_table = "users"

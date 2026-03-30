@@ -1,11 +1,14 @@
 import logging
+import uuid
+from datetime import datetime, timedelta, timezone
 
 import jwt
-from apps.user.services.blacklist_service import BlacklistService
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.http import HttpRequest
 from ninja.security import HttpBearer
+
+from apps.user.services.blacklist_service import BlacklistService
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -79,7 +82,7 @@ class UnifiedJWTAuthentication(HttpBearer):
             )
             jti = payload.get("jti")
             if jti and BlacklistService.is_blacklisted(jti):
-                logger.warning(f"Token {jti} is blacklisted")
+                logger.warning("Token %s is blacklisted", jti)
                 return None
 
             user_id = payload.get("user_id")
@@ -87,7 +90,7 @@ class UnifiedJWTAuthentication(HttpBearer):
                 return User.objects.get(id=user_id)
             return None
         except Exception as e:
-            logger.warning(f"Token validation failed: {e}")
+            logger.warning("Token validation failed: %s", e)
             return None
 
     def _refresh_access_token(
@@ -101,19 +104,25 @@ class UnifiedJWTAuthentication(HttpBearer):
             )
             jti = payload.get("jti")
             if jti and BlacklistService.is_blacklisted(jti):
-                logger.warning(f"Refresh token {jti} is blacklisted")
+                logger.warning("Refresh token %s is blacklisted", jti)
                 return None, None
 
             user_id = payload.get("user_id")
             if user_id:
                 user = User.objects.get(id=user_id)
+                exp = datetime.now(timezone.utc) + settings.SIMPLE_JWT.get("ACCESS_TOKEN_LIFETIME", timedelta(minutes=5))
                 new_access_token = jwt.encode(
-                    {"user_id": str(user.id)},
+                    {
+                        "user_id": str(user.id),
+                        "exp": exp.timestamp(),
+                        "jti": uuid.uuid4().hex,
+                        "token_type": "access",
+                    },
                     settings.SIMPLE_JWT["SIGNING_KEY"],
                     algorithm=settings.SIMPLE_JWT["ALGORITHM"],
                 )
                 return user, new_access_token
             return None, None
         except Exception as e:
-            logger.error(f"Refresh token failed: {e}")
+            logger.error("Refresh token failed: %s", e)
             return None, None

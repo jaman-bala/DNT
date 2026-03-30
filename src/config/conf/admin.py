@@ -2,32 +2,33 @@ from django.templatetags.static import static
 from django.urls import reverse_lazy
 
 UNFOLD = {
-    "SITE_TITLE": "Blog admin panel",
-    "SITE_HEADER": "Blog admin panel",
-    "SITE_SUBHEADER": "Blog admin panel",
-    "SITE_URL": "https://president.kg/",
+    "SITE_TITLE": "DNT admin panel",
+    "SITE_HEADER": "",
+    "SITE_SUBHEADER": "",
+    "SITE_LOGO": "https://bakaitravel.kg/assets/vectors/logo/full.svg", # logo внутри шапки
+    "SITE_URL": "https://bakaitravel.kg/",
     "SITE_FAVICONS": [
         {
             "rel": "icon",
             "sizes": "32x32",
             "type": "image/jpeg",
-            "href": "https://st4.depositphotos.com/4018617/31061/v/1600/depositphotos_310617096-stock-illustration-%EF%BF%BD%EF%BF%BD%EF%BF%BD%EF%BF%BD%EF%BF%BD%EF%BF%BD%EF%BF%BD%EF%BF%BD%EF%BF%BD%EF%BF%BD%EF%BF%BD%EF%BF%BD.jpg",
+            "href": "https://bakaitravel.kg/assets/vectors/logo/full.svg",
         },
-    ],
+    ], # логотип в фавиконках
     "SHOW_BACK_BUTTON": True,
     "ENVIRONMENT": "config.conf.admin.environment_callback",
     "SIDEBAR": {
         "show_search": True,
-        "show_all_applications": True,
+        "show_all_applications": False,
         "navigation": [
             {
-                "title": "Users",
+                "title": "Управление пользователями",
                 "separator": True,
                 "collapsible": True,
                 "items": [
                     {
-                        "title": "Users",
-                        "icon": "person",
+                        "title": "Пользователи",
+                        "icon": "group",
                         "link": reverse_lazy("admin:user_user_changelist"),
                     },
                 ],
@@ -38,7 +39,7 @@ UNFOLD = {
         lambda request: static("js/admin-row-clickable.js"),
     ],
     "LOGIN": {
-        "image": lambda request: "https://foto.papik.pro/uploads/posts/2025-05/30/17486248253786.jpg",
+        "image": lambda request: "http://foto.papik.pro/uploads/posts/2025-05/30/17486248253786.jpg",
     },
 }
 

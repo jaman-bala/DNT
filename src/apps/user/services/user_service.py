@@ -1,5 +1,12 @@
 import uuid
 
+from django.conf import settings
+from django.contrib.auth.hashers import make_password
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
+from django.utils import timezone
+from ninja.files import UploadedFile
+
 from apps.user.dto.schemas import (
     ChangePasswordDTO,
     UserFormDataDTO,
@@ -16,12 +23,6 @@ from apps.user.exceptions import (
 )
 from apps.user.models.users import User
 from config.base.base_service import BaseService
-from django.conf import settings
-from django.contrib.auth.hashers import make_password
-from django.core.exceptions import ValidationError
-from django.db import IntegrityError
-from django.utils import timezone
-from ninja.files import UploadedFile
 
 
 class UserService(BaseService):
@@ -30,33 +31,10 @@ class UserService(BaseService):
     def __init__(self):
         super().__init__()
 
-    def create_user(self, data: UserRequestDTO) -> User:
-        """Create a new user with validation"""
-        if User.objects.filter(phone=data.phone).exists():
-            raise UserAlreadyExistsError(f"Phone number {data.phone} already exists")
-
-        if data.email and User.objects.filter(email=data.email).exists():
-            raise UserAlreadyExistsError(f"Email {data.email} already exists")
-
-        try:
-            user = User.objects.create(
-                phone=data.phone,
-                email=data.email,
-                first_name=data.first_name,
-                last_name=data.last_name,
-                middle_name=data.middle_name,
-                password=make_password(data.password),
-                profile_image=data.profile_image,
-                password_changed_at=timezone.now(),
-            )
-            return user
-        except IntegrityError as e:
-            raise UserError(f"Failed to create user: {str(e)}") from e
-
-    def create_user_with_file(
-        self, data: UserFormDataDTO, profile_image: UploadedFile | None = None
+    def create_user(
+        self, data: UserRequestDTO | UserFormDataDTO, profile_image: UploadedFile | None = None
     ) -> User:
-        """Create a new user with form data and file upload to MinIO"""
+        """Create a new user with validation and optional file upload"""
         if User.objects.filter(phone=data.phone).exists():
             raise UserAlreadyExistsError(f"Phone number {data.phone} already exists")
 
@@ -64,8 +42,7 @@ class UserService(BaseService):
             raise UserAlreadyExistsError(f"Email {data.email} already exists")
 
         try:
-            # Upload image to MinIO if provided
-            image_url = None
+            image_url = getattr(data, 'profile_image', None)
             if profile_image:
                 image_url = self._upload_to_minio(profile_image)
 

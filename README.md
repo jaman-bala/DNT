@@ -1,4 +1,4 @@
-# Django-Ninja Template
+# DNT - Django-Ninja Template
 
 Современный шаблон Django-Ninja проекта с лучшими практиками разработки.
 

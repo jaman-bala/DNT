@@ -1,15 +1,15 @@
 services:
   postgres:
-    container_name: postgres
-    image: postgres:15-alpine
+    container_name: postgres_dnt
+    image: postgres:16-alpine
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_dnt:/var/lib/postgresql/data
     env_file:
-      - ../envs/.env
+      - ../envs/.env.dev
     ports:
-      - "5444:5432"
+      - "5498:5432"
     networks:
-      - backend-network
+      - backend-network-dnt
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-postgres}"]
       interval: 10s
@@ -23,7 +23,7 @@ services:
         max_attempts: 3
 
   app:
-    container_name: backend
+    container_name: backend_dnt
     restart: always
     build:
       context: ../..
@@ -34,21 +34,25 @@ services:
       - static:/app/src/staticfiles
       - ../../src:/app/src
     env_file:
-      - ../envs/.env
+      - ../envs/.env.dev
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_started
+      minio:
+        condition: service_healthy
     ports:
-      - "8044:8000"
+      - "8099:8000"
     networks:
-      - backend-network
+      - backend-network-dnt
 
   minio:
     image: minio/minio:RELEASE.2025-04-22T22-12-26Z
-    container_name: minio
+    container_name: minio_dnt
     restart: always
     env_file:
-      - ../envs/.env
+      - ../envs/.env.dev
     ports:
       - "9000:9000"  # S3 API
       - "9001:9001"  # веб-консоль
@@ -61,7 +65,7 @@ services:
       timeout: 10s
       retries: 3
     networks:
-      - backend-network
+      - backend-network-dnt
 
 #  rabbitmq:
 #    image: rabbitmq:3-management
@@ -83,12 +87,12 @@ services:
 #      - backend-network
 
   redis:
-    container_name: redis
+    container_name: redis_dnt
     image: redis:7-alpine
     ports:
-      - "6344:6379"
+      - "6399:6379"
     networks:
-      - backend-network
+      - backend-network-dnt
     deploy:
       replicas: 1
       restart_policy:
@@ -97,12 +101,12 @@ services:
         max_attempts: 3
 
 volumes:
-  postgres_data:
+  postgres_data_dnt:
   media:
   static:
   minio-data:
 #  rabbitmq_data:
 
 networks:
-  backend-network:
+  backend-network-dnt:
     driver: bridge

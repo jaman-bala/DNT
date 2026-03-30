@@ -1,7 +1,8 @@
-from apps.user.services.blacklist_service import BlacklistService
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from rest_framework_simplejwt.tokens import RefreshToken
+
+from apps.user.services.blacklist_service import BlacklistService
 
 User = get_user_model()
 

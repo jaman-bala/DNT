@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv
-RUN pip install uv==0.4.24
+RUN pip install "uv>=0.4"
 
 WORKDIR /app
 
