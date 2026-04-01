@@ -6,7 +6,7 @@ from config.auth.authentication import UnifiedJWTAuthentication
 
 jwt_auth = UnifiedJWTAuthentication()
 
-router = Router(tags=["Users"])
+router = Router()
 
 router.add_router("/auth", auth_router)
 router.add_router("/users", user_router, auth=jwt_auth)
