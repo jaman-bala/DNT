@@ -31,7 +31,10 @@ class CustomPagination(AsyncPaginationBase):
     ) -> Any:
         offset = pagination.offset
         limit = pagination.limit
+        # Critical: Convert sliced queryset to list asynchronously to avoid SynchronousOnlyOperation
+        items = [item async for item in queryset[offset : offset + limit]]
+        count = await queryset.acount()
         return {
-            "items": queryset[offset : offset + limit],
-            "count": await self._aitems_count(queryset),
+            "items": items,
+            "count": count,
         }
