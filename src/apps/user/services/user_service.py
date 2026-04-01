@@ -1,11 +1,10 @@
 import uuid
 
-from django.conf import settings
+from asgiref.sync import sync_to_async
 from django.contrib.auth.hashers import make_password
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.utils import timezone
-from ninja.files import UploadedFile
 
 from apps.user.dto.schemas import (
     ChangePasswordDTO,
@@ -15,7 +14,6 @@ from apps.user.dto.schemas import (
     UserUpdateFormDataDTO,
 )
 from apps.user.exceptions import (
-    FileUploadError,
     InvalidPasswordError,
     UserAlreadyExistsError,
     UserError,
@@ -31,28 +29,32 @@ class UserService(BaseService):
     def __init__(self):
         super().__init__()
 
-    def create_user(
-        self, data: UserRequestDTO | UserFormDataDTO, profile_image: UploadedFile | None = None
+    async def create_user(
+        self,
+        data: UserRequestDTO | UserFormDataDTO,
+        profile_image_url: str | None = None,
     ) -> User:
-        """Create a new user with validation and optional file upload"""
-        if User.objects.filter(phone=data.phone).exists():
+        """Create a new user with validation"""
+        if await User.objects.filter(phone=data.phone).aexists():
             raise UserAlreadyExistsError(f"Phone number {data.phone} already exists")
 
-        if data.email and User.objects.filter(email=data.email).exists():
+        if data.email and await User.objects.filter(email=data.email).aexists():
             raise UserAlreadyExistsError(f"Email {data.email} already exists")
 
         try:
-            image_url = getattr(data, 'profile_image', None)
-            if profile_image:
-                image_url = self._upload_to_minio(profile_image)
+            # If profile_image_url is not provided, check if it's in data (e.g. from JSON)
+            image_url = profile_image_url or getattr(data, "profile_image", None)
 
-            user = User.objects.create(
+            # make_password is CPU bound, sync_to_async is fine
+            hashed_password = await sync_to_async(make_password)(data.password)
+
+            user = await User.objects.acreate(
                 phone=data.phone,
                 email=data.email,
                 first_name=data.first_name,
                 last_name=data.last_name,
                 middle_name=data.middle_name,
-                password=make_password(data.password),
+                password=hashed_password,
                 profile_image=image_url,
                 password_changed_at=timezone.now(),
             )
@@ -60,40 +62,15 @@ class UserService(BaseService):
         except IntegrityError as e:
             raise UserError(f"Failed to create user: {str(e)}") from e
 
-    def _upload_to_minio(self, file: UploadedFile) -> str:
-        """Upload file to MinIO and return the URL"""
-        try:
-            client = self.s3_client.get_client()
-
-            # Ensure bucket exists (ideally this should be done once during app startup)
-            try:
-                client.head_bucket(Bucket=settings.AWS_STORAGE_BUCKET_NAME)
-            except Exception:
-                client.create_bucket(Bucket=settings.AWS_STORAGE_BUCKET_NAME)
-
-            # Generate unique filename
-            file_extension = file.name.split(".")[-1] if "." in file.name else "jpg"
-            filename = f"profile_images/{uuid.uuid4()}.{file_extension}"
-
-            # Upload file
-            client.upload_fileobj(
-                file,
-                settings.AWS_STORAGE_BUCKET_NAME,
-                filename,
-                ExtraArgs={"ContentType": file.content_type or "image/jpeg"},
-            )
-
-            # Return the URL using helper
-            return self.s3_client.get_file_url(filename)
-
-        except Exception as e:
-            raise FileUploadError(f"File upload error: {str(e)}") from e
-
-    def update_user(self, user: User, data: UserUpdateDTO) -> User:
+    async def update_user(self, user: User, data: UserUpdateDTO) -> User:
         """Update user profile"""
         try:
             if data.email and data.email != user.email:
-                if User.objects.filter(email=data.email).exclude(id=user.id).exists():
+                if (
+                    await User.objects.filter(email=data.email)
+                    .exclude(id=user.id)
+                    .aexists()
+                ):
                     raise UserAlreadyExistsError(f"Email {data.email} already exists")
                 user.email = data.email
 
@@ -108,23 +85,28 @@ class UserService(BaseService):
                 user.profile_image = data.profile_image
 
             if data.password:
-                user.set_password(data.password)
+                await sync_to_async(user.set_password)(data.password)
+                user.password_changed_at = timezone.now()
 
-            user.save()
+            await user.asave()
             return user
         except IntegrityError as e:
             raise UserError(f"Failed to update user: {str(e)}") from e
 
-    def update_user_with_file(
+    async def update_user_with_file(
         self,
         user: User,
         data: UserUpdateFormDataDTO,
-        profile_image: UploadedFile | None = None,
+        profile_image_url: str | None = None,
     ) -> User:
-        """Update user profile with form data and file upload to MinIO"""
+        """Update user profile with form data and pre-uploaded image URL"""
         try:
             if data.email and data.email != user.email:
-                if User.objects.filter(email=data.email).exclude(id=user.id).exists():
+                if (
+                    await User.objects.filter(email=data.email)
+                    .exclude(id=user.id)
+                    .aexists()
+                ):
                     raise UserAlreadyExistsError(f"Email {data.email} already exists")
                 user.email = data.email
 
@@ -135,58 +117,59 @@ class UserService(BaseService):
             if data.middle_name:
                 user.middle_name = data.middle_name
 
-            if profile_image:
-                image_url = self._upload_to_minio(profile_image)
-                user.profile_image = image_url
+            if profile_image_url:
+                user.profile_image = profile_image_url
 
-            user.save()
+            await user.asave()
             return user
         except IntegrityError as e:
             raise UserError(f"Failed to update user: {str(e)}") from e
 
-    def get_all_users(self, filters=None):
+    async def get_all_users(self, filters=None):
         """Get all users for admin list"""
         qs = User.objects.all()
         if filters:
             qs = filters.filter(qs)
         return qs
 
-    def get_user_by_id(self, user_id: uuid.UUID) -> User:
+    async def get_user_by_id(self, user_id: uuid.UUID) -> User:
         """Get user by ID"""
         try:
-            return User.objects.get(id=user_id)
+            return await User.objects.aget(id=user_id)
         except User.DoesNotExist:
             raise UserNotFoundError(f"User with id {user_id} not found") from None
 
-    def get_user_by_phone(self, phone: str) -> User:
+    async def get_user_by_phone(self, phone: str) -> User:
         """Get user by phone"""
         try:
-            return User.objects.get(phone=phone)
+            return await User.objects.aget(phone=phone)
         except User.DoesNotExist:
             raise UserNotFoundError(f"User with phone {phone} not found") from None
 
-    def deactivate_user(self, user: User) -> User:
+    async def deactivate_user(self, user: User) -> User:
         """Deactivate user account"""
         user.is_active = False
-        user.save()
+        await user.asave()
         return user
 
-    def activate_user(self, user: User) -> User:
+    async def activate_user(self, user: User) -> User:
         """Activate user account"""
         user.is_active = True
-        user.save()
+        await user.asave()
         return user
 
-    def change_password(self, user: User, data: ChangePasswordDTO) -> None:
+    async def change_password(self, user: User, data: ChangePasswordDTO) -> None:
         """Change user's password"""
         if data.new_password != data.confirm_password:
             raise InvalidPasswordError("New passwords do not match")
 
         try:
-            user.set_password(data.new_password)
+            # set_password is CPU bound, wrap it
+            await sync_to_async(user.set_password)(data.new_password)
             user.password_changed_at = timezone.now()
-            user.full_clean()  # Validate the new password
-            user.save()
+            # full_clean might have DB calls if there are unique constraints, wrap it
+            await sync_to_async(user.full_clean)()
+            await user.asave()
         except ValidationError as e:
             raise InvalidPasswordError(f"Password validation error: {str(e)}") from e
         except Exception as e:

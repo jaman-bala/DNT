@@ -22,7 +22,9 @@ def read_secret(secret_name: str, env_variable_name: str | None = None) -> str |
 
 
 class EnvHelper:
-    def __call__(self, env_name: str, default: Any = None, is_bool: bool = False) -> str | bool | Any:
+    def __call__(
+        self, env_name: str, default: Any = None, is_bool: bool = False
+    ) -> str | bool | Any:
         """
         Get environment variable value with type conversion.
 
@@ -40,7 +42,9 @@ class EnvHelper:
                 return None
             if is_bool:
                 return (
-                    bool(default) if isinstance(default, bool) else strtobool(str(default))
+                    bool(default)
+                    if isinstance(default, bool)
+                    else strtobool(str(default))
                 )
             return default
 
@@ -54,5 +58,6 @@ class EnvHelper:
         if value is None:
             return default if default is not None else []
         return [x.strip() for x in value.split(",")]
+
 
 env = EnvHelper()

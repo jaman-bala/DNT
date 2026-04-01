@@ -1,60 +1,62 @@
-from uuid import UUID
 from datetime import datetime
+from uuid import UUID
 
 from ninja import Field, Schema
 from pydantic import ConfigDict
 
+from config.types import (
+    FirstName,
+    LastName,
+    MiddleName,
+    PasswordStr,
+    PhoneStr,
+)
+
 
 class UserRequestDTO(Schema):
-    phone: str = Field(
+    phone: PhoneStr = Field(
         ...,
-        min_length=3,
-        max_length=150,
         description="Phone number",
         example="+996500500500",
     )
     email: str | None = Field(
-        None, description="Email address", example="[EMAIL_ADDRESS]"
+        None, description="Email address", example="admin@example.com"
     )
-    password: str = Field(
-        ..., min_length=8, description="Password", example="P@sSw0rd-312!"
+    password: PasswordStr = Field(..., description="Password", example="P@sSw0rd-312!")
+    first_name: FirstName | None = Field(
+        None, description="First name", example="Mirbek"
     )
-    first_name: str | None = Field(
-        None, max_length=150, description="First name", example="Mirbek"
+    last_name: LastName | None = Field(
+        None, description="Last name", example="Atabekov"
     )
-    last_name: str | None = Field(
-        None, max_length=150, description="Last name", example="Atabekov"
-    )
-    middle_name: str | None = Field(
-        None, max_length=150, description="Middle name", example="Smith"
+    middle_name: MiddleName | None = Field(
+        None, description="Middle name", example="Smith"
     )
     profile_image: str | None = Field(None, description="Profile image URL")
 
 
 class UserFormDataDTO(Schema):
-    phone: str = Field(
+    phone: PhoneStr = Field(
         ...,
-        min_length=3,
-        max_length=150,
         description="Phone number",
         example="+996500500500",
     )
     email: str | None = Field(
-        None, description="Email address", example="[EMAIL_ADDRESS]"
+        None, description="Email address", example="admin@example.com"
     )
-    password: str = Field(..., min_length=8, description="Password", example="password")
-    first_name: str | None = Field(None, max_length=150, description="First name")
-    last_name: str | None = Field(None, max_length=150, description="Last name")
-    middle_name: str | None = Field(None, max_length=150, description="Middle name")
+    password: PasswordStr = Field(..., description="Password", example="password")
+    first_name: FirstName | None = Field(None, description="First name")
+    last_name: LastName | None = Field(None, description="Last name")
+    middle_name: MiddleName | None = Field(None, description="Middle name")
 
 
 class UserResponseDTO(Schema):
     id: UUID = Field(..., description="User ID")
-    phone: str = Field(..., description="Phone number")
+    phone: PhoneStr = Field(..., description="Phone number")
     email: str | None = Field(None, description="Email address")
-    first_name: str | None = Field(None, description="First name")
-    last_name: str | None = Field(None, description="Last name")
-    middle_name: str | None = Field(None, description="Middle name")
+    first_name: FirstName | None = Field(None, description="First name")
+    last_name: LastName | None = Field(None, description="Last name")
+    middle_name: MiddleName | None = Field(None, description="Middle name")
     profile_image: str | None = Field(None, description="Profile image URL")
     is_active: bool = Field(..., description="User active status")
     date_joined: datetime = Field(..., description="Registration date")
@@ -67,18 +69,18 @@ class UserResponseDTO(Schema):
 
 class UserUpdateDTO(Schema):
     email: str | None = Field(None, description="Email address")
-    first_name: str | None = Field(None, max_length=150, description="First name")
-    last_name: str | None = Field(None, max_length=150, description="Last name")
-    middle_name: str | None = Field(None, max_length=150, description="Middle name")
+    first_name: FirstName | None = Field(None, description="First name")
+    last_name: LastName | None = Field(None, description="Last name")
+    middle_name: MiddleName | None = Field(None, description="Middle name")
     profile_image: str | None = Field(None, description="Profile image URL")
-    password: str | None = Field(None, min_length=8, description="New password")
+    password: PasswordStr | None = Field(None, description="New password")
 
 
 class UserUpdateFormDataDTO(Schema):
     email: str | None = Field(None, description="Email address")
-    first_name: str | None = Field(None, max_length=150, description="First name")
-    last_name: str | None = Field(None, max_length=150, description="Last name")
-    middle_name: str | None = Field(None, max_length=150, description="Middle name")
+    first_name: FirstName | None = Field(None, description="First name")
+    last_name: LastName | None = Field(None, description="Last name")
+    middle_name: MiddleName | None = Field(None, description="Middle name")
 
 
 class LoginRequestDTO(Schema):
@@ -111,5 +113,5 @@ class ErrorResponseDTO(Schema):
 
 
 class ChangePasswordDTO(Schema):
-    new_password: str = Field(..., min_length=8, description="New password")
-    confirm_password: str = Field(..., min_length=8, description="Confirm new password")
+    new_password: PasswordStr = Field(..., description="New password")
+    confirm_password: PasswordStr = Field(..., description="Confirm new password")

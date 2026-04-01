@@ -81,6 +81,15 @@ if USE_AWS:
 
 else:
     STATIC_URL = "/static/"
-    STATIC_ROOT = BASE_DIR / "static"
+    STATIC_ROOT = BASE_DIR / "staticfiles"
     MEDIA_ROOT = BASE_DIR / "media"
     MEDIA_URL = "/media/"
+
+    STORAGES: dict[str, dict[str, Any]] = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }

@@ -11,8 +11,9 @@ from apps.user.exceptions import (
 api_v1 = NinjaAPI(
     title="API v1",
     version="1.1",
-    description="Modern Django-Ninja API template with best practices (Version 1)",
+    description="Framework Django-Ninja-Template DNT (Version 1)",
 )
+
 
 @api_v1.get("/health/", tags=["Healthcheck"])
 def healthcheck(request):

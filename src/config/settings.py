@@ -15,7 +15,11 @@ SECRET_KEY = read_secret("SECRET_KEY") or env(
 )
 
 _debug_secret = read_secret("DEBUG")
-DEBUG = strtobool(_debug_secret) if _debug_secret is not None else env("DEBUG", default=False, is_bool=True)
+DEBUG = (
+    strtobool(_debug_secret)
+    if _debug_secret is not None
+    else env("DEBUG", default=False, is_bool=True)
+)
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
 
