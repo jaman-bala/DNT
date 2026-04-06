@@ -21,7 +21,7 @@ class BaseManager(models.Manager):
 class BaseModel(models.Model):
     id = models.UUIDField(
         primary_key=True,
-        default=uuid.uuid4,
+        default=uuid.uuid7,
         editable=False,
     )
     created_at = models.DateTimeField(auto_now_add=True)

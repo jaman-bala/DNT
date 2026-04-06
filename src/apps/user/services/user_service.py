@@ -63,7 +63,8 @@ class UserService(BaseService):
         try:
             if data.email and data.email != user.email:
                 if (
-                    await User.objects.filter(email=data.email)
+                    await User.objects
+                    .filter(email=data.email)
                     .exclude(id=user.id)
                     .aexists()
                 ):
@@ -88,8 +89,6 @@ class UserService(BaseService):
             return user
         except IntegrityError as e:
             raise UserError(f"Failed to update user: {str(e)}") from e
-
-
 
     async def get_all_users(self, filters=None):
         """Get all users for admin list"""

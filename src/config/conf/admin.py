@@ -35,7 +35,9 @@ UNFOLD = {
         ],
     },
     "LOGIN": {
-        "image": lambda request: "http://foto.papik.pro/uploads/posts/2025-05/30/17486248253786.jpg",
+        "image": lambda request: (
+            "http://foto.papik.pro/uploads/posts/2025-05/30/17486248253786.jpg"
+        ),
     },
 }
 

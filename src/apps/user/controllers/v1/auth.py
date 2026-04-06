@@ -7,7 +7,6 @@ from apps.user.dto.schemas import (
     LoginResponseDTO,
     RefreshRequestDTO,
     RefreshResponseDTO,
-    RefreshResponseDTO,
     UserRequestDTO,
     UserResponseDTO,
 )

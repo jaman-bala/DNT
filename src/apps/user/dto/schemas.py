@@ -34,9 +34,6 @@ class UserRequestDTO(BaseModel):
     profile_image: str | None = Field(None, description="Profile image URL")
 
 
-
-
-
 class UserResponseDTO(BaseModel):
     id: UUID = Field(..., description="User ID")
     phone: PhoneStr = Field(..., description="Phone number")
@@ -61,9 +58,6 @@ class UserUpdateDTO(BaseModel):
     middle_name: MiddleName | None = Field(None, description="Middle name")
     profile_image: str | None = Field(None, description="Profile image URL")
     password: PasswordStr | None = Field(None, description="New password")
-
-
-
 
 
 class LoginRequestDTO(BaseModel):
