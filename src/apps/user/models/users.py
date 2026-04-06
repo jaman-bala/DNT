@@ -12,7 +12,7 @@ class User(BaseAuthModel):
     middle_name = models.CharField("Middle name", max_length=150, blank=True, null=True)
     email = models.EmailField("Email", blank=True, null=True)
     phone = models.CharField("Phone", max_length=15, unique=True)
-    profile_image = models.ImageField("Profile image", blank=True, null=True)
+    profile_image = models.CharField("Profile image", max_length=255, blank=True, null=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     can_activate = models.BooleanField("Can Activate", default=False)

@@ -1,14 +1,13 @@
 import uuid
 
-from ninja import File, Form, Query, Router
+from ninja import Query, Router
 from ninja.errors import HttpError
-from ninja.files import UploadedFile
 from ninja.pagination import paginate
 
 from apps.user.dto.schemas import (
     ChangePasswordDTO,
     UserResponseDTO,
-    UserUpdateFormDataDTO,
+    UserUpdateDTO,
 )
 from apps.user.filters import UserFilterSchema
 from config.auth.authentication import UnifiedJWTAuthentication
@@ -18,30 +17,12 @@ from config.pagination import CustomPagination
 router = Router(tags=["User"])
 
 
-@router.put("/me_update", response=UserResponseDTO, auth=UnifiedJWTAuthentication())
+@router.patch("/me_update", response=UserResponseDTO, auth=UnifiedJWTAuthentication())
 async def update_current_user(
     request,
-    email: str | None = Form(None),
-    first_name: str | None = Form(None),
-    last_name: str | None = Form(None),
-    middle_name: str | None = Form(None),
-    profile_image: UploadedFile | None = File(None),
+    data: UserUpdateDTO,
 ):
-    profile_image_url = None
-    if profile_image:
-        profile_image_url = await container.s3_service.upload_file(
-            profile_image, folder="profile_images"
-        )
-
-    data = UserUpdateFormDataDTO(
-        email=email,
-        first_name=first_name,
-        last_name=last_name,
-        middle_name=middle_name,
-    )
-    user = await container.user_service.update_user_with_file(
-        request.user, data, profile_image_url=profile_image_url
-    )
+    user = await container.user_service.update_user(request.user, data)
     return user
 
 

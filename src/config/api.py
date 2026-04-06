@@ -1,5 +1,6 @@
 from ninja import NinjaAPI
 
+from apps.common.controllers.v1.upload import router as common_router_v1
 from apps.user.controllers.v1.urls import router as user_router_v1
 from apps.user.exceptions import (
     InvalidPasswordError,
@@ -41,4 +42,5 @@ def handle_user_error(request, exc):
 
 
 # Add routers
+api_v1.add_router("/common", common_router_v1)
 api_v1.add_router("", user_router_v1)

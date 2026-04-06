@@ -1,14 +1,14 @@
 from django.conf import settings
 from django.http import JsonResponse
-from ninja import File, Form, Router
-from ninja.files import UploadedFile
+from ninja import Router
 
 from apps.user.dto.schemas import (
     LoginRequestDTO,
     LoginResponseDTO,
     RefreshRequestDTO,
     RefreshResponseDTO,
-    UserFormDataDTO,
+    RefreshResponseDTO,
+    UserRequestDTO,
     UserResponseDTO,
 )
 from config.auth.authentication import UnifiedJWTAuthentication
@@ -20,31 +20,9 @@ router = Router(tags=["Authentication and Authorization"])
 @router.post("/register", response=UserResponseDTO)
 async def register_user(
     request,
-    phone: str = Form(...),
-    email: str | None = Form(None),
-    password: str = Form(...),
-    first_name: str | None = Form(None),
-    last_name: str | None = Form(None),
-    middle_name: str | None = Form(None),
-    profile_image: UploadedFile | None = File(None),
+    data: UserRequestDTO,
 ):
-    profile_image_url = None
-    if profile_image:
-        profile_image_url = await container.s3_service.upload_file(
-            profile_image, folder="profile_images"
-        )
-
-    data = UserFormDataDTO(
-        phone=phone,
-        email=email,
-        password=password,
-        first_name=first_name,
-        last_name=last_name,
-        middle_name=middle_name,
-    )
-    user = await container.user_service.create_user(
-        data, profile_image_url=profile_image_url
-    )
+    user = await container.user_service.create_user(data)
     return user
 
 

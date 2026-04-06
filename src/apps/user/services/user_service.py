@@ -8,10 +8,8 @@ from django.utils import timezone
 
 from apps.user.dto.schemas import (
     ChangePasswordDTO,
-    UserFormDataDTO,
     UserRequestDTO,
     UserUpdateDTO,
-    UserUpdateFormDataDTO,
 )
 from apps.user.exceptions import (
     InvalidPasswordError,
@@ -31,8 +29,7 @@ class UserService(BaseService):
 
     async def create_user(
         self,
-        data: UserRequestDTO | UserFormDataDTO,
-        profile_image_url: str | None = None,
+        data: UserRequestDTO,
     ) -> User:
         """Create a new user with validation"""
         if await User.objects.filter(phone=data.phone).aexists():
@@ -42,8 +39,7 @@ class UserService(BaseService):
             raise UserAlreadyExistsError(f"Email {data.email} already exists")
 
         try:
-            # If profile_image_url is not provided, check if it's in data (e.g. from JSON)
-            image_url = profile_image_url or getattr(data, "profile_image", None)
+            image_url = data.profile_image
 
             # make_password is CPU bound, sync_to_async is fine
             hashed_password = await sync_to_async(make_password)(data.password)
@@ -93,37 +89,7 @@ class UserService(BaseService):
         except IntegrityError as e:
             raise UserError(f"Failed to update user: {str(e)}") from e
 
-    async def update_user_with_file(
-        self,
-        user: User,
-        data: UserUpdateFormDataDTO,
-        profile_image_url: str | None = None,
-    ) -> User:
-        """Update user profile with form data and pre-uploaded image URL"""
-        try:
-            if data.email and data.email != user.email:
-                if (
-                    await User.objects.filter(email=data.email)
-                    .exclude(id=user.id)
-                    .aexists()
-                ):
-                    raise UserAlreadyExistsError(f"Email {data.email} already exists")
-                user.email = data.email
 
-            if data.first_name:
-                user.first_name = data.first_name
-            if data.last_name:
-                user.last_name = data.last_name
-            if data.middle_name:
-                user.middle_name = data.middle_name
-
-            if profile_image_url:
-                user.profile_image = profile_image_url
-
-            await user.asave()
-            return user
-        except IntegrityError as e:
-            raise UserError(f"Failed to update user: {str(e)}") from e
 
     async def get_all_users(self, filters=None):
         """Get all users for admin list"""

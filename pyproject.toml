@@ -3,11 +3,11 @@ name = "dnt"
 version = "0.1.0"
 description = "Modern Django-Ninja Template with best practices"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.14"
 dependencies = [
     # Core Django
     "django>=5.2.6",
-    "django-ninja>=1.4.3",
+    "django-ninja>=1.6.2",
     "django-split-settings>=1.3.2",
     # Database
     "psycopg2-binary>=2.9.9",
@@ -20,7 +20,7 @@ dependencies = [
     "boto3>=1.34.0",
     # Utilities
     "python-dotenv>=1.0.0",
-    "pydantic>=2.5.0",
+    "pydantic>=2.12.0",
     "loguru>=0.7.2",
     # Development
     "django-debug-toolbar>=4.2.0",
@@ -49,7 +49,8 @@ build-backend = "hatchling.build"
 packages = ["src"]
 
 [tool.ruff]
-target-version = "py313"
+target-version = "py314"
+preview = true
 line-length = 88
 
 [tool.ruff.lint]
