@@ -1,40 +1,48 @@
 # DNT - Django-Ninja Template
 
-Современный шаблон Django-Ninja проекта с лучшими практиками разработки.
+Современный шаблон Django-Ninja проекта с энтерпрайз-архитектурой (DI, Async, Clean Architecture) и поддержкой последних технологий.
 
 ## 🚀 Особенности
 
-- **Django 5.2+** с Django-Ninja для быстрой разработки API
-- **Современная архитектура** с разделением на слои (Controller → Service → Repository)
-- **JWT аутентификация** с refresh токенами
-- **Docker контейнеризация** с полным стеком (PostgreSQL, Redis, MinIO, RabbitMQ)
-- **Pydantic схемы** для валидации данных
-- **Comprehensive тестирование** с pytest
-- **Code quality** с ruff, mypy, coverage
-- **Безопасность** с CORS, CSRF защитой
-- **Готовность к продакшену** с gunicorn, health checks
+- **Python 3.14+**: Использование новейших возможностей языка и высокая производительность.
+- **Django 5.2+** с **Django-Ninja 1.6+** для быстрой разработки асинхронных API.
+- **Enterprise Архитектура**: 
+    - Четкое разделение на слои (Controller → Service → Repository).
+    - **Dependency Injection**: Использование DI контейнера для управления зависимостями.
+    - **Async First**: Полная поддержка асинхронности в БД и I/O операциях.
+- **JWT Аутентификация**: Полный цикл с access/refresh токенами и хранением в HTTP-only cookies.
+- **Docker Стек**: PostgreSQL, Redis, MinIO, RabbitMQ.
+- **Инструментарий**: 
+    - **uv**: Современный менеджер пакетов и окружения.
+    - **ruff**: Быстрый линтер и форматировщик.
+    - **pytest**: Полноценное тестирование с покрытием.
+- **UI**: Кастомизированная админка на базе **Django Unfold**.
 
 ## 📁 Структура проекта
 
 ```
 src/
 ├── apps/
-│   └── user/
-│       ├── controllers/     # API endpoints
-│       ├── services/        # Business logic
-│       ├── models/          # Database models
-│       ├── dto/             # Pydantic schemas
-│       └── tests/           # Unit tests
+│   ├── common/              # Общие контроллеры и сервисы (Upload и др.)
+│   └── user/                # Модуль управления пользователями
+│       ├── controllers/     # API эндпоинты (v1/)
+│       ├── services/        # Бизнес-логика (Async)
+│       ├── models/          # Модели базы данных
+│       ├── dto/             # Pydantic схемы (Запросы и Ответы)
+│       ├── repository/      # Слой работы с БД
+│       └── tests/           # Тесты модуля
 ├── config/
-│   ├── conf/                # Split settings
-│   ├── auth/                # Authentication
-│   └── settings.py          # Main settings
+│   ├── base/                # Базовые классы для моделей и сервисов
+│   ├── auth/                # Настройки аутентификации
+│   ├── container.py         # DI Контейнер
+│   ├── api.py               # Конфигурация NinjaAPI
+│   └── settings.py          # Настройки проекта
 └── manage.py
 ```
 
 ## 🛠 Установка и запуск
 
-### Локальная разработка
+### Локальная разработка (с `uv`)
 
 1. **Клонируйте репозиторий**
 ```bash
@@ -42,177 +50,89 @@ git clone <repository-url>
 cd django-ninja-template
 ```
 
-2. **Установите зависимости**
-```bash
-# Используем uv для быстрой установки
-uv sync
-```
-
-3. **Настройте окружение**
+2. **Настройте окружение**
 ```bash
 cp env.example .env
-# Отредактируйте .env файл под ваши нужды
+# Отредактируйте .env файл (БД, Redis и др.)
 ```
 
-4. **Запустите миграции**
+3. **Установите зависимости и запустите проект**
 ```bash
+# Синхронизация зависимостей
+uv sync
+
+# Запуск миграций
 uv run python src/manage.py migrate
-```
 
-5. **Создайте суперпользователя**
-```bash
+# Создание суперпользователя
 uv run python src/manage.py createsuperuser
-```
 
-6. **Запустите сервер**
-```bash
+# Запуск сервера разработки
 uv run python src/manage.py runserver
 ```
 
 ### Docker (рекомендуется)
 
-1. **Запустите все сервисы**
 ```bash
+# Сборка и запуск всех сервисов
 cd infra/docker
-docker compose up --build
-```
+docker compose up --build -d
 
-2. **Выполните миграции**
-```bash
+# Миграции внутри Docker
 docker compose exec app python src/manage.py migrate
 ```
 
-3. **Создайте суперпользователя**
-```bash
-docker compose exec app python src/manage.py createsuperuser
-```
+## 🔧 API Эндпоинты
 
-## 🔧 API Endpoints
-
-После запуска сервера доступны следующие endpoints:
-
-- **API Documentation**: http://localhost:8000/docs
-- **Admin Panel**: http://localhost:8000/admin
-- **User API**: http://localhost:8000/api/v1/users/
+Документация Swagger доступна по адресу: http://localhost:8000/api/v1/docs
 
 ### Примеры запросов
 
 **Регистрация пользователя**
 ```bash
-curl -X POST "http://localhost:8000/api/v1/users/register" \
+curl -X POST "http://localhost:8000/api/v1/auth/register" \
   -H "Content-Type: application/json" \
   -d '{
-    "username": "testuser",
-    "email": "test@example.com",
-    "password": "testpass123",
-    "fio": "Test User"
+    "phone": "+996500500500",
+    "password": "StrongPassword123!",
+    "first_name": "Тестовое",
+    "last_name": "Имя"
   }'
 ```
 
-**Авторизация**
+**Авторизация (Login)**
 ```bash
-curl -X POST "http://localhost:8000/api/v1/users/login" \
+curl -X POST "http://localhost:8000/api/v1/auth/login" \
   -H "Content-Type: application/json" \
   -d '{
-    "username": "testuser",
-    "password": "testpass123"
+    "phone": "+996500500500",
+    "password": "StrongPassword123!"
   }'
 ```
 
-**Получение профиля (требует токен)**
+**Обновление токена**
 ```bash
-curl -X GET "http://localhost:8000/api/v1/users/me" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+curl -X POST "http://localhost:8000/api/v1/auth/refresh" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "refresh": "YOUR_REFRESH_TOKEN"
+  }'
 ```
 
-## 🧪 Тестирование
+## 🧪 Тестирование и линтинг
 
 ```bash
-# Запуск всех тестов
+# Запуск тестов
 uv run pytest
 
-# Запуск с покрытием
-uv run pytest --cov=apps --cov-report=html
-
-# Запуск конкретного теста
-uv run pytest src/apps/user/tests/test_views.py::UserAPITestCase::test_user_registration
-```
-
-## 🔍 Code Quality
-
-```bash
-# Форматирование кода
-uv run ruff format .
-
-# Проверка стиля
+# Проверка кода линтером
 uv run ruff check .
-
-# Исправление автоисправимых ошибок
-uv run ruff check . --fix
 ```
 
-## 🐳 Docker сервисы
+## 📚 Архитектура и DI
 
-- **app**: Django приложение (порт 8000)
-- **postgres**: PostgreSQL база данных (порт 5432)
-- **redis**: Redis кеш (порт 6379)
-- **minio**: S3-совместимое хранилище (порт 9000)
-- **rabbitmq**: Message broker (порт 5672)
-
-## 🔐 Безопасность
-
-- JWT токены с refresh механизмом
-- CORS настройки для фронтенда
-- CSRF защита
-- Валидация входных данных с Pydantic
-- Безопасные настройки по умолчанию
-
-## 📦 Зависимости
-
-### Основные
-- Django 5.2+
-- Django-Ninja 1.4+
-- PostgreSQL (psycopg2)
-- JWT (djangorestframework-simplejwt)
-
-### Разработка
-- pytest, pytest-django
-- factory-boy для тестовых данных
-- ruff для линтинга
-- django-debug-toolbar
-
-### Продакшн
-- gunicorn
-- django-storages (S3/MinIO)
-- loguru для логирования
-
-## 🚀 Развертывание
-
-1. **Настройте переменные окружения для продакшена**
-2. **Используйте production stage в Dockerfile**
-3. **Настройте reverse proxy (nginx)**
-4. **Настройте SSL сертификаты**
-5. **Настройте мониторинг и логирование**
-
-## 🤝 Вклад в проект
-
-1. Fork репозитория
-2. Создайте feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit изменения (`git commit -m 'Add amazing feature'`)
-4. Push в branch (`git push origin feature/amazing-feature`)
-5. Откройте Pull Request
-
-## 📄 Лицензия
-
-Этот проект распространяется под лицензией MIT. См. файл `LICENSE` для подробностей.
-
-## 🆘 Поддержка
-
-Если у вас есть вопросы или проблемы:
-1. Проверьте [Issues](../../issues)
-2. Создайте новый Issue с подробным описанием
-3. Обратитесь к документации Django-Ninja
+Подробное описание архитектурных решений проекта доступно в файле [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ---
+**DNT - Построен для масштабируемых и производительных систем.**
 
-**Создано с ❤️ для современной разработки Django API**
