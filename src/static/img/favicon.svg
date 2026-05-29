@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <defs>
+    <linearGradient id="fav-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366F1" />
+      <stop offset="50%" stop-color="#8B5CF6" />
+      <stop offset="100%" stop-color="#D946EF" />
+    </linearGradient>
+  </defs>
+  <!-- Beautiful ninja hexagon border -->
+  <path d="M16 2 L28 9 L28 23 L16 30 L4 23 L4 9 Z" stroke="url(#fav-grad)" stroke-width="3" stroke-linejoin="round" />
+  <!-- Inner N slash -->
+  <path d="M11 11 V21 L16 12 L21 21 V11" stroke="url(#fav-grad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+</svg>

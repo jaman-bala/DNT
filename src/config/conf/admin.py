@@ -1,17 +1,21 @@
 from django.urls import reverse_lazy
+from django.templatetags.static import static
 
 UNFOLD = {
     "SITE_TITLE": "DNT admin panel",
     "SITE_HEADER": "",
     "SITE_SUBHEADER": "",
-    "SITE_LOGO": "https://bakaitravel.kg/assets/vectors/logo/full.svg",  # logo внутри шапки
-    "SITE_URL": "https://bakaitravel.kg/",
+    "SITE_LOGO": {
+        "light": lambda request: static("img/logo_light.svg"),
+        "dark": lambda request: static("img/logo_dark.svg"),
+    },
+    "SITE_URL": "https://github.com/jaman-bala/DNT",
     "SITE_FAVICONS": [
         {
             "rel": "icon",
             "sizes": "32x32",
-            "type": "image/jpeg",
-            "href": "https://bakaitravel.kg/assets/vectors/logo/full.svg",
+            "type": "image/svg+xml",
+            "href": lambda request: static("img/favicon.svg"),
         },
     ],  # логотип в фавиконках
     "SHOW_BACK_BUTTON": True,

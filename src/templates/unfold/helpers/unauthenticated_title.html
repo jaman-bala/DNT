@@ -1,0 +1,17 @@
+{% load i18n static %}
+
+<div class="border-b border-base-200 mb-8 pb-6 dark:border-base-800 flex flex-col gap-4">
+    <!-- Beautiful SVG Logo that responds to dark/light mode -->
+    <div>
+        <img src="{% static 'img/logo_dark.svg' %}" alt="Logo" class="h-10 hidden dark:block" />
+        <img src="{% static 'img/logo_light.svg' %}" alt="Logo" class="h-10 block dark:hidden" />
+    </div>
+
+    <h1 class="font-semibold">
+        {% if subtitle %}
+            <span class="block text-sm text-font-subtle-light dark:text-font-subtle-dark">{{ subtitle }}</span>
+        {% endif %}
+
+        <span class="block font-semibold text-primary-600 tracking-tight text-xl dark:text-primary-500">{{ title }}</span>
+    </h1>
+</div>

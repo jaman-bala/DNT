@@ -45,6 +45,12 @@ class User(BaseAuthModel):
         """Returns True if the user is required to change their password."""
         return is_password_change_required(self)
 
+    @property
+    def avatar_url(self) -> str | None:
+        """Returns the avatar URL for the user to be displayed in Unfold admin."""
+        return self.profile_image
+
+
     class Meta:
         verbose_name = "Пользователь"
         verbose_name_plural = "Пользователи"

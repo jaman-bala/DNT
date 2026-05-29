@@ -36,6 +36,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.env.bak
 
 # IDE
 .vscode/
@@ -66,3 +67,8 @@ src/media/
 Dockerfile*
 docker-compose*
 .dockerignore
+
+
+# DB
+# *.sqlite3
+db.sqlite3
