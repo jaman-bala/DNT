@@ -47,4 +47,5 @@ include(
     "conf/templates.py",
     "conf/cache.py",
     "conf/admin.py",
+    "conf/control_room.py",
 )

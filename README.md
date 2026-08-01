@@ -21,6 +21,7 @@
     - **ruff**: Быстрый линтер и форматировщик.
     - **pytest**: Полноценное тестирование с покрытием.
 - **UI**: Кастомизированная админка на базе **Django Unfold**.
+- **Django Control Room** (dev-only): панель интроспекции URL-ов в админке + опциональный MCP-эндпоинт для AI-агентов.
 
 ## 📁 Структура проекта
 
@@ -237,6 +238,37 @@ curl "http://localhost:8000/api/v1/notes/" \
 3. Зарегистрируйте сервис в `config/container.py`, роутер и обработчики исключений —
    в `config/api.py`, приложение — в `config/conf/installed_apps.py::MY_APPS`.
 4. `uv run python src/manage.py makemigrations <your_app>`.
+
+## 🕹 Django Control Room (только для DEBUG)
+
+[dj-urls-panel](https://django-control-room.github.io/dj-urls-panel/) даёт интроспекцию
+всех URL проекта прямо из админки: поиск по паттерну/имени/вьюхе, детали каждого урла,
+автоопределение DRF-сериализаторов. Подключён так же, как `django-debug-toolbar` —
+пакет и приложения активны только при `DEBUG=True`, в проде их просто нет.
+
+Открой (залогинившись как staff-пользователь):
+
+```
+http://localhost:8000/admin/dj-urls-panel/    # список и детали URL
+http://localhost:8000/admin/dj-control-room/  # общий дашборд
+```
+
+Тема подстроена под Django Unfold (`config/conf/control_room.py`).
+
+### AI-агенты (MCP)
+
+`dj-control-room` умеет отдавать `list_urls`, `get_url_detail`, `inspect_view` AI-агентам
+(Cursor, Claude и т.п.) через единый MCP-эндпоинт `/admin/dj-control-room/mcp/`. Выключен
+по умолчанию — включается тремя переменными в `.env`:
+
+```bash
+DJ_CONTROL_ROOM_MCP_ENABLED=True
+DJ_CONTROL_ROOM_MCP_TOKEN=change-me-to-a-long-random-secret
+DJ_CONTROL_ROOM_MCP_USERNAME=your-staff-username  # должен существовать и быть is_staff
+```
+
+Агент авторизуется `Authorization: Bearer <DJ_CONTROL_ROOM_MCP_TOKEN>`, а разрешения на
+каждый вызов инструмента проверяются от имени `MCP_USERNAME`.
 
 ## 🧪 Тестирование и линтинг
 

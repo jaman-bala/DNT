@@ -30,4 +30,10 @@ if DEBUG:
     INSTALLED_APPS += [
         "django_extensions",
         "debug_toolbar",
+        # Django Control Room — admin-integrated introspection panels (URLs,
+        # Redis, Celery, ...) plus an optional MCP endpoint for AI agents.
+        # Dev-only by design: see config/conf/control_room.py.
+        "dj_control_room_base",
+        "dj_urls_panel",
+        "dj_control_room",
     ]
