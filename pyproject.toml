@@ -72,7 +72,7 @@ python_files = ["tests.py", "test_*.py", "*_tests.py"]
 
 [dependency-groups]
 dev = [
-    "pre-commit>=4.5.1",
+    "pre-commit>=4.6.1",
     "ruff>=0.13.2",
     "bandit[toml]>=1.7.9",
     "django-debug-toolbar>=4.2.0",
