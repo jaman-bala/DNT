@@ -1,15 +1,20 @@
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.core.cache import cache
+from django.test import TestCase, override_settings
 from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
 
 
+@override_settings(
+    CACHES={"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+)
 class UserAPITestCase(TestCase):
     """Test cases for User API endpoints"""
 
     def setUp(self):
         """Set up test data"""
+        cache.clear()  # isolate rate-limit counters from other test cases
         self.user_data = {
             "phone": "+996500000000",
             "email": "test@example.com",
@@ -31,7 +36,7 @@ class UserAPITestCase(TestCase):
     def test_user_registration(self):
         """Test user registration endpoint"""
         new_user_data = {
-            "phone": "+996500000001",
+            "phone": "+996500000002",
             "email": "newuser@example.com",
             "password": "newpass123",
             "first_name": "New",
@@ -39,16 +44,24 @@ class UserAPITestCase(TestCase):
             "middle_name": "New",
         }
 
-        response = self.client.post("/api/v1/auth/register", data=new_user_data)
+        response = self.client.post(
+            "/api/v1/auth/register",
+            data=new_user_data,
+            content_type="application/json",
+        )
 
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(User.objects.filter(phone="+996500000001").exists())
+        self.assertTrue(User.objects.filter(phone="+996500000002").exists())
 
     def test_user_registration_duplicate_phone(self):
         """Test user registration with duplicate phone"""
-        response = self.client.post("/api/v1/auth/register", data=self.user_data)
+        response = self.client.post(
+            "/api/v1/auth/register",
+            data=self.user_data,
+            content_type="application/json",
+        )
 
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 409)
 
     def test_user_login(self):
         """Test user login endpoint"""
@@ -102,8 +115,8 @@ class UserAPITestCase(TestCase):
             "email": "updated@example.com",
         }
 
-        response = self.client.put(
-            "/api/v1/users/me",
+        response = self.client.patch(
+            "/api/v1/users/me_update",
             data=update_data,
             content_type="application/json",
             HTTP_AUTHORIZATION=f"Bearer {access_token}",
@@ -126,7 +139,9 @@ class UserAPITestCase(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.json()), 2)  # testuser + admin
+        body = response.json()
+        self.assertEqual(body["count"], 2)  # testuser + admin
+        self.assertEqual(len(body["items"]), 2)
 
     def test_list_users_non_admin(self):
         """Test list users endpoint for non-admin user"""

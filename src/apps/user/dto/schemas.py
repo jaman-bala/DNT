@@ -80,6 +80,10 @@ class RefreshRequestDTO(BaseModel):
     refresh: str = Field(..., description="Refresh token")
 
 
+class LogoutRequestDTO(BaseModel):
+    refresh: str | None = Field(None, description="Refresh token to blacklist")
+
+
 class RefreshResponseDTO(BaseModel):
     access: str = Field(..., description="New access token")
 

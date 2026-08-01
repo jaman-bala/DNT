@@ -1,10 +1,11 @@
-from django.conf import settings
-from django.http import JsonResponse
+from loguru import logger
 from ninja import Router
 
+from apps.common.utils.ratelimit import enforce_rate_limit
 from apps.user.dto.schemas import (
     LoginRequestDTO,
     LoginResponseDTO,
+    LogoutRequestDTO,
     RefreshRequestDTO,
     RefreshResponseDTO,
     UserRequestDTO,
@@ -21,7 +22,17 @@ async def register_user(
     request,
     data: UserRequestDTO,
 ):
+    await enforce_rate_limit(request, scope="register", limit=10, window_seconds=3600)
     user = await container.user_service.create_user(data)
+    try:
+        # Background jobs must never break the request path they were
+        # triggered from; a stalled worker/Redis just means the job is
+        # skipped (and logged) instead of failing registration.
+        await container.queue_service.enqueue(
+            "log_event", f"New user registered: {user.phone}"
+        )
+    except Exception:
+        logger.warning("Failed to enqueue log_event for {}", user.phone)
     return user
 
 
@@ -30,6 +41,9 @@ async def login(
     request,
     data: LoginRequestDTO,
 ):
+    await enforce_rate_limit(
+        request, scope="login", limit=5, window_seconds=300, extra_key=data.phone
+    )
     return await container.auth_service.login(data.phone, data.password)
 
 
@@ -38,6 +52,7 @@ async def refresh_token(
     request,
     data: RefreshRequestDTO,
 ):
+    await enforce_rate_limit(request, scope="refresh", limit=20, window_seconds=300)
     return await container.auth_service.refresh_token(data.refresh)
 
 
@@ -47,17 +62,13 @@ async def get_current_user(request):
 
 
 @router.post("/logout", auth=UnifiedJWTAuthentication())
-async def logout(request):
+async def logout(
+    request,
+    data: LogoutRequestDTO = None,
+):
     access_token_str = request.auth
-    refresh_token_str = request.COOKIES.get(
-        settings.SIMPLE_JWT.get("AUTH_COOKIE_REFRESH", "refresh_token")
-    )
+    refresh_token_str = data.refresh if data else None
 
     await container.auth_service.logout(access_token_str, refresh_token_str)
 
-    response = JsonResponse({"message": "Successfully logged out"})
-
-    response.delete_cookie(settings.SIMPLE_JWT["AUTH_COOKIE"])
-    response.delete_cookie(settings.SIMPLE_JWT["AUTH_COOKIE_REFRESH"])
-
-    return response
+    return {"message": "Successfully logged out"}

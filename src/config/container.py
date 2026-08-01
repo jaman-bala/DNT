@@ -1,3 +1,4 @@
+from apps.common.services.queue_service import QueueService
 from apps.common.services.s3_service import S3Service
 from apps.user.services.auth_service import AuthService
 from apps.user.services.blacklist_service import BlacklistService
@@ -9,6 +10,7 @@ class Container:
 
     def __init__(self):
         self.s3_service = S3Service()
+        self.queue_service = QueueService()
         self.blacklist_service = BlacklistService()
         self.user_service = UserService()
         self.auth_service = AuthService(blacklist_service=self.blacklist_service)

@@ -47,6 +47,24 @@ services:
     networks:
       - backend-network-dnt
 
+  worker:
+    container_name: worker_dnt
+    restart: always
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile
+      target: development
+    command: arq apps.common.worker.WorkerSettings
+    volumes:
+      - ../../src:/app/src
+    env_file:
+      - ../envs/.env.dev
+    depends_on:
+      redis:
+        condition: service_started
+    networks:
+      - backend-network-dnt
+
   minio:
     image: minio/minio:RELEASE.2025-04-22T22-12-26Z
     container_name: minio_dnt
@@ -67,25 +85,6 @@ services:
     networks:
       - backend-network-dnt
 
-#  rabbitmq:
-#    image: rabbitmq:3-management
-#    container_name: rabbitmq
-#   restart: always
-#    ports:
-#      - '5673:5672'     # AMQP port for Celery broker
-#      - '15673:15672'   # Management UI
-#    env_file:
-#      - ../envs/.env
-#    volumes:
-#      - rabbitmq_data:/var/lib/rabbitmq
-#    healthcheck:
-#      test: [ "CMD", "rabbitmqctl", "status" ]
-#      interval: 30s
-#      timeout: 10s
-#      retries: 3
-#    networks:
-#      - backend-network
-
   redis:
     container_name: redis_dnt
     image: redis:7-alpine
@@ -105,7 +104,6 @@ volumes:
   media:
   static:
   minio-data:
-#  rabbitmq_data:
 
 networks:
   backend-network-dnt:

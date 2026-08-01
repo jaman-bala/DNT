@@ -31,6 +31,7 @@
 ```python
 from config.container import container
 
+
 @router.post("/register")
 async def register(request, data: UserRequestDTO):
     user = await container.user_service.create_user(data)
@@ -62,6 +63,7 @@ async def register(request, data: UserRequestDTO):
 
 ## 🔒 Безопасность
 
-*   **JWT с Cookies**: Access-токен передается в заголовке, а Refresh-токен хранится в HTTP-only куке для защиты от XSS атак.
+*   **JWT через Bearer**: Access/refresh токены передаются в заголовке `Authorization: Bearer`; отозванные токены (по `jti`) хранятся в Redis-blacklist, `token_type` строго проверяется, чтобы refresh-токен нельзя было использовать как access.
+*   **Rate limiting**: `/auth/login`, `/auth/register`, `/auth/refresh` и `/common/upload` ограничены по IP (и, для логина, по номеру телефона) через `apps/common/utils/ratelimit.py`.
 *   **Pydantic V2**: Строгая типизация и валидация всех входящих и исходящих данных.
 *   **Custom Types**: Использование специальных типов в `config/types.py` для валидации телефонов, паролей и имен.

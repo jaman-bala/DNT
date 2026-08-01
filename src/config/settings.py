@@ -42,6 +42,7 @@ include(
     "conf/jwt.py",
     "conf/i18n.py",
     "conf/storage_aws.py",
+    "conf/uploads.py",
     "conf/templates.py",
     "conf/cache.py",
     "conf/admin.py",

@@ -1,5 +1,5 @@
-from django.urls import reverse_lazy
 from django.templatetags.static import static
+from django.urls import reverse_lazy
 
 UNFOLD = {
     "SITE_TITLE": "DNT admin panel",

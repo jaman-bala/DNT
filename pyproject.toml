@@ -6,39 +6,32 @@ readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     # Core Django
-    "django>=5.2.6",
-    "django-ninja>=1.6.2",
-    "django-split-settings>=1.3.2",
+    "django>=6.0.3,<7.0",
+    "django-ninja>=1.6.2,<2.0",
+    "django-split-settings>=1.3.2,<2.0",
     # Database
-    "psycopg2-binary>=2.9.9",
-    "pillow>=10.0.0",
+    "psycopg[binary,pool]>=3.2,<4.0",
+    "pillow>=12.2.0,<13.0",
     # Authentication & Security
-    "djangorestframework-simplejwt>=5.3.0",
-    "django-cors-headers>=4.3.1",
+    "djangorestframework-simplejwt>=5.5,<6.0",
+    "django-cors-headers>=4.9,<5.0",
     # Storage
-    "django-storages>=1.14.4",
-    "boto3>=1.34.0",
+    "django-storages>=1.14,<2.0",
+    "boto3>=1.42,<2.0",
     # Utilities
-    "python-dotenv>=1.0.0",
-    "pydantic>=2.12.0",
-    "loguru>=0.7.2",
-    # Development
-    "django-debug-toolbar>=4.2.0",
-    "django-extensions>=3.2.3",
-    "ruff>=0.13.2",
-    # Caching & Redis
-    "redis>=5.0.1",
-    "django-redis>=5.4.0",
+    "python-dotenv>=1.2.2,<2.0",
+    "pydantic>=2.12,<3.0",
+    "loguru>=0.7,<1.0",
+    # Caching & Redis (redis-py capped at <6 because arq pins redis[hiredis]<6)
+    "redis>=5.0.1,<6.0",
+    "django-redis>=6.0,<7.0",
+    # Background tasks
+    "arq>=0.26,<1.0",
     # Production server
-    "gunicorn>=21.2.0",
-    # Testing
-    "pytest>=7.4.3",
-    "pytest-django>=4.7.0",
-    "factory-boy>=3.3.0",
-    "pytest-cov>=4.1.0",
-    "django-unfold>=0.83.1",
-    "uvicorn>=0.42.0",
-    "whitenoise>=6.12.0",
+    "gunicorn>=25.3.0,<26.0",
+    "uvicorn>=0.43.0,<1.0",
+    "whitenoise>=6.12.0,<7.0",
+    "django-unfold>=0.87,<1.0",
 ]
 
 [build-system]
@@ -79,4 +72,12 @@ python_files = ["tests.py", "test_*.py", "*_tests.py"]
 [dependency-groups]
 dev = [
     "pre-commit>=4.5.1",
+    "ruff>=0.13.2",
+    "bandit[toml]>=1.7.9",
+    "django-debug-toolbar>=4.2.0",
+    "django-extensions>=3.2.3",
+    "pytest>=7.4.3",
+    "pytest-django>=4.7.0",
+    "pytest-cov>=4.1.0",
+    "factory-boy>=3.3.0",
 ]

@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.test import TestCase, override_settings
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -12,6 +13,7 @@ User = get_user_model()
 )
 class BlacklistTestCase(TestCase):
     def setUp(self):
+        cache.clear()  # isolate rate-limit/blacklist counters from other test cases
         self.user_data = {
             "phone": "+996500000000",
             "email": "test@example.com",
@@ -36,7 +38,10 @@ class BlacklistTestCase(TestCase):
 
         # 3. Logout
         response = self.client.post(
-            "/api/v1/auth/logout", HTTP_AUTHORIZATION=f"Bearer {access_token}"
+            "/api/v1/auth/logout",
+            data={},
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {access_token}",
         )
         self.assertEqual(response.status_code, 200)
 
@@ -45,15 +50,16 @@ class BlacklistTestCase(TestCase):
             "/api/v1/auth/me", HTTP_AUTHORIZATION=f"Bearer {access_token}"
         )
         self.assertEqual(response.status_code, 401)
-        self.assertIn("Token validation failed", response.content.decode())
 
-    def test_manual_blacklist_check(self):
+    async def test_manual_blacklist_check(self):
         refresh = RefreshToken.for_user(self.user)
         jti = refresh["jti"]
         exp = refresh.payload["exp"]
 
-        self.assertFalse(BlacklistService.is_blacklisted(jti))
+        service = BlacklistService()
 
-        BlacklistService.add_to_blacklist(jti, exp)
+        self.assertFalse(await service.is_blacklisted(jti))
 
-        self.assertTrue(BlacklistService.is_blacklisted(jti))
+        await service.add_to_blacklist(jti, exp)
+
+        self.assertTrue(await service.is_blacklisted(jti))

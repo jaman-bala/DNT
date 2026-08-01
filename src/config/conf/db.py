@@ -21,4 +21,3 @@ else:
             "PORT": env("POSTGRES_PORT", default="5432"),
         }
     }
-
