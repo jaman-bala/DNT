@@ -34,6 +34,13 @@ RUN uv pip install --system .
 # Development stage
 FROM base AS development
 
+# Dev-only tools (django-debug-toolbar, django-extensions, dj-control-room, ...)
+# live in pyproject.toml's [dependency-groups].dev and are only added to
+# INSTALLED_APPS when DEBUG=True (see config/conf/installed_apps.py) — but
+# `docker compose` runs with DEBUG=True, so this image needs them installed
+# too, unlike the production stage below.
+RUN uv pip install --system --group dev .
+
 # Copy source code
 COPY . .
 
