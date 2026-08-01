@@ -4,8 +4,10 @@ from asgiref.sync import async_to_sync
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
+from apps.common.services.queue_service import QueueService
 from apps.user.dto.schemas import ChangePasswordDTO, UserRequestDTO, UserUpdateDTO
 from apps.user.exceptions import UserAlreadyExistsError, UserNotFoundError
+from apps.user.services.blacklist_service import BlacklistService
 from apps.user.services.user_service import UserService
 
 User = get_user_model()
@@ -16,7 +18,9 @@ class UserServiceTestCase(TestCase):
 
     def setUp(self):
         """Set up test data"""
-        self.service = UserService()
+        self.service = UserService(
+            blacklist_service=BlacklistService(), queue_service=QueueService()
+        )
         self.user_data = UserRequestDTO(
             phone="+996500000000",
             email="test@example.com",

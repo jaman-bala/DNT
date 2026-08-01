@@ -3,9 +3,13 @@ from ninja import Router
 
 from apps.common.utils.ratelimit import enforce_rate_limit
 from apps.user.dto.schemas import (
+    EmailVerificationConfirmDTO,
     LoginRequestDTO,
     LoginResponseDTO,
     LogoutRequestDTO,
+    MessageResponseDTO,
+    PasswordResetConfirmDTO,
+    PasswordResetRequestDTO,
     RefreshRequestDTO,
     RefreshResponseDTO,
     UserRequestDTO,
@@ -33,6 +37,11 @@ async def register_user(
         )
     except Exception:
         logger.warning("Failed to enqueue log_event for {}", user.phone)
+
+    if user.email:
+        # request_email_verification already logs and swallows enqueue failures.
+        await container.user_service.request_email_verification(user)
+
     return user
 
 
@@ -72,3 +81,64 @@ async def logout(
     await container.auth_service.logout(access_token_str, refresh_token_str)
 
     return {"message": "Successfully logged out"}
+
+
+@router.post("/password-reset/request", response=MessageResponseDTO)
+async def request_password_reset(
+    request,
+    data: PasswordResetRequestDTO,
+):
+    await enforce_rate_limit(
+        request,
+        scope="password-reset-request",
+        limit=5,
+        window_seconds=3600,
+        extra_key=data.email,
+    )
+    await container.auth_service.request_password_reset(data.email)
+    return {
+        "message": "If an account with that email exists, a reset link has been sent."
+    }
+
+
+@router.post("/password-reset/confirm", response=MessageResponseDTO)
+async def confirm_password_reset(
+    request,
+    data: PasswordResetConfirmDTO,
+):
+    await enforce_rate_limit(
+        request, scope="password-reset-confirm", limit=10, window_seconds=3600
+    )
+    await container.auth_service.confirm_password_reset(
+        data.token, data.new_password, data.confirm_password
+    )
+    return {"message": "Password has been reset successfully."}
+
+
+@router.post(
+    "/email/verify/resend",
+    response=MessageResponseDTO,
+    auth=UnifiedJWTAuthentication(),
+)
+async def resend_email_verification(request):
+    await enforce_rate_limit(
+        request,
+        scope="email-verify-resend",
+        limit=5,
+        window_seconds=3600,
+        extra_key=str(request.user.id),
+    )
+    await container.user_service.request_email_verification(request.user)
+    return {"message": "Verification email sent."}
+
+
+@router.post("/email/verify/confirm", response=MessageResponseDTO)
+async def confirm_email_verification(
+    request,
+    data: EmailVerificationConfirmDTO,
+):
+    await enforce_rate_limit(
+        request, scope="email-verify-confirm", limit=10, window_seconds=3600
+    )
+    await container.user_service.confirm_email_verification(data.token)
+    return {"message": "Email verified successfully."}

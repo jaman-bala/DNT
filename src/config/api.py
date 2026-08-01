@@ -5,6 +5,7 @@ from apps.user.controllers.v1.urls import router as user_router_v1
 from apps.user.exceptions import (
     FileUploadError,
     InvalidPasswordError,
+    InvalidTokenError,
     UserAlreadyExistsError,
     UserError,
     UserNotFoundError,
@@ -44,6 +45,11 @@ def handle_user_error(request, exc):
 
 @api_v1.exception_handler(FileUploadError)
 def handle_file_upload_error(request, exc):
+    return api_v1.create_response(request, {"detail": str(exc)}, status=400)
+
+
+@api_v1.exception_handler(InvalidTokenError)
+def handle_invalid_token_error(request, exc):
     return api_v1.create_response(request, {"detail": str(exc)}, status=400)
 
 

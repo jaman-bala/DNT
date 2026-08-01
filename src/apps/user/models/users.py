@@ -11,6 +11,7 @@ class User(BaseAuthModel):
     last_name = models.CharField("Last name", max_length=150, blank=True, null=True)
     middle_name = models.CharField("Middle name", max_length=150, blank=True, null=True)
     email = models.EmailField("Email", blank=True, null=True)
+    email_verified = models.BooleanField("Email verified", default=False)
     phone = models.CharField("Phone", max_length=15, unique=True)
     profile_image = models.CharField(
         "Profile image", max_length=255, blank=True, null=True

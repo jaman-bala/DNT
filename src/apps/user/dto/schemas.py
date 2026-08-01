@@ -43,6 +43,7 @@ class UserResponseDTO(BaseModel):
     middle_name: MiddleName | None = Field(None, description="Middle name")
     profile_image: str | None = Field(None, description="Profile image URL")
     is_active: bool = Field(..., description="User active status")
+    email_verified: bool = Field(False, description="Is email verified")
     date_joined: datetime = Field(..., description="Registration date")
     password_change_required: bool = Field(
         False, description="Is password change required"
@@ -96,3 +97,23 @@ class ErrorResponseDTO(BaseModel):
 class ChangePasswordDTO(BaseModel):
     new_password: PasswordStr = Field(..., description="New password")
     confirm_password: PasswordStr = Field(..., description="Confirm new password")
+
+
+class PasswordResetRequestDTO(BaseModel):
+    email: str = Field(
+        ..., description="Email address on file", example="admin@example.com"
+    )
+
+
+class PasswordResetConfirmDTO(BaseModel):
+    token: str = Field(..., description="Password reset token from the email link")
+    new_password: PasswordStr = Field(..., description="New password")
+    confirm_password: PasswordStr = Field(..., description="Confirm new password")
+
+
+class EmailVerificationConfirmDTO(BaseModel):
+    token: str = Field(..., description="Email verification token from the email link")
+
+
+class MessageResponseDTO(BaseModel):
+    message: str = Field(..., description="Human-readable status message")

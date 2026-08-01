@@ -66,6 +66,7 @@ async def register(request, data: UserRequestDTO):
 ## 🔒 Безопасность
 
 *   **JWT через Bearer**: Access/refresh токены передаются в заголовке `Authorization: Bearer`; отозванные токены (по `jti`) хранятся в Redis-blacklist, `token_type` строго проверяется, чтобы refresh-токен нельзя было использовать как access.
-*   **Rate limiting**: `/auth/login`, `/auth/register`, `/auth/refresh` и `/common/upload` ограничены по IP (и, для логина, по номеру телефона) через `apps/common/utils/ratelimit.py`.
+*   **Password reset / Email verification**: одноразовые токены того же JWT-формата (`apps/user/utils/tokens.py`) с собственным `token_type` (`password_reset` / `email_verification`) — поэтому их тоже нельзя использовать как access-токен, а после применения они попадают в тот же blacklist, что и logout.
+*   **Rate limiting**: `/auth/login`, `/auth/register`, `/auth/refresh`, `/common/upload` и password-reset/email-verify эндпоинты ограничены по IP (и, для логина, по номеру телефона) через `apps/common/utils/ratelimit.py`.
 *   **Pydantic V2**: Строгая типизация и валидация всех входящих и исходящих данных.
 *   **Custom Types**: Использование специальных типов в `config/types.py` для валидации телефонов, паролей и имен.

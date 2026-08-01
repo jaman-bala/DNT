@@ -11,6 +11,7 @@
     - **Dependency Injection**: Использование DI контейнера для управления зависимостями.
     - **Async First**: Полная поддержка асинхронности в БД и I/O операциях.
 - **JWT Аутентификация**: access/refresh токены через `Authorization: Bearer`, с blacklist отозванных токенов в Redis.
+- **Password reset / Email verification**: одноразовые JWT-токены (`token_type` + blacklist), письма уходят через фоновую очередь.
 - **Rate limiting**: встроенная защита от брутфорса на `/auth/login`, `/auth/register`, `/auth/refresh` и `/common/upload`.
 - **Фоновые задачи**: очередь на **arq** (Redis) для асинхронных джобов (email, обработка файлов и т.п.).
 - **Docker Стек**: PostgreSQL, Redis, MinIO, arq worker.
@@ -139,12 +140,52 @@ curl -X POST "http://localhost:8000/api/v1/common/upload" \
 не забудьте также дополнить `EXTENSION_CONTENT_TYPES` в
 `src/apps/common/controllers/v1/upload.py`, иначе Content-Type не пройдёт проверку.
 
+**Сброс пароля**
+```bash
+# 1. Запросить письмо со ссылкой (ответ одинаков независимо от того, найден ли email —
+#    так нельзя проверить, зарегистрирован ли конкретный email в системе)
+curl -X POST "http://localhost:8000/api/v1/auth/password-reset/request" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com"}'
+
+# 2. В dev-режиме письмо с токеном печатается в логи (`docker compose logs app worker`,
+#    console email backend). Забрать оттуда токен и подтвердить новый пароль:
+curl -X POST "http://localhost:8000/api/v1/auth/password-reset/confirm" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "token": "TOKEN_FROM_EMAIL",
+    "new_password": "NewStrongPassword123!",
+    "confirm_password": "NewStrongPassword123!"
+  }'
+```
+Токен живёт 30 минут и одноразовый (после использования попадает в тот же Redis-blacklist,
+что и токены logout).
+
+**Подтверждение email**
+```bash
+# Письмо со ссылкой уходит автоматически при регистрации (если указан email).
+# Повторно запросить его может только авторизованный пользователь:
+curl -X POST "http://localhost:8000/api/v1/auth/email/verify/resend" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+
+curl -X POST "http://localhost:8000/api/v1/auth/email/verify/confirm" \
+  -H "Content-Type: application/json" \
+  -d '{"token": "TOKEN_FROM_EMAIL"}'
+```
+Подтверждение email **не блокирует** вход по умолчанию. Чтобы это включить (например,
+в проде), поставьте `REQUIRE_EMAIL_VERIFICATION=True` в `.env` — тогда `login` будет
+возвращать `403`, пока пользователь с указанным email его не подтвердит.
+Настройки почты — `EMAIL_*` / `DEFAULT_FROM_EMAIL` / `FRONTEND_URL` в `env.example`;
+по умолчанию используется console backend (письма печатаются в лог), для реальной
+отправки укажите `EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend` и SMTP-креды.
+
 ### Rate limiting
 
-`/auth/login`, `/auth/register`, `/auth/refresh` и `/common/upload` защищены простым
-async rate limiter'ом на Redis (`src/apps/common/utils/ratelimit.py`), без дополнительных
-зависимостей. При превышении лимита эндпоинт возвращает `429`. Используйте
-`enforce_rate_limit(...)` в своих новых эндпоинтах по тому же образцу.
+`/auth/login`, `/auth/register`, `/auth/refresh`, `/common/upload` и все эндпоинты
+password-reset/email-verify защищены простым async rate limiter'ом на Redis
+(`src/apps/common/utils/ratelimit.py`), без дополнительных зависимостей. При превышении
+лимита эндпоинт возвращает `429`. Используйте `enforce_rate_limit(...)` в своих новых
+эндпоинтах по тому же образцу.
 
 ## 🕒 Фоновые задачи (arq)
 

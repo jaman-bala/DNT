@@ -37,3 +37,11 @@ class FileUploadError(UserError):
 
     def __init__(self, message: str = "Failed to upload file"):
         super().__init__(message, code="file_upload_error")
+
+
+class InvalidTokenError(UserError):
+    """Raised when a password-reset/email-verification token is invalid,
+    expired, or already used."""
+
+    def __init__(self, message: str = "Invalid or expired token"):
+        super().__init__(message, code="invalid_token")

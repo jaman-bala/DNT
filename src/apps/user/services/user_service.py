@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 from asgiref.sync import sync_to_async
@@ -6,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.utils import timezone
 
+from apps.common.services.queue_service import QueueService
 from apps.user.dto.schemas import (
     ChangePasswordDTO,
     UserRequestDTO,
@@ -13,19 +15,32 @@ from apps.user.dto.schemas import (
 )
 from apps.user.exceptions import (
     InvalidPasswordError,
+    InvalidTokenError,
     UserAlreadyExistsError,
     UserError,
     UserNotFoundError,
 )
 from apps.user.models.users import User
+from apps.user.services.blacklist_service import BlacklistService
+from apps.user.utils.tokens import (
+    EMAIL_VERIFICATION_TOKEN_LIFETIME,
+    generate_action_token,
+    verify_action_token,
+)
 from config.base.base_service import BaseService
+
+logger = logging.getLogger(__name__)
 
 
 class UserService(BaseService):
     """Service layer for user-related business logic"""
 
-    def __init__(self):
+    def __init__(
+        self, blacklist_service: BlacklistService, queue_service: QueueService
+    ):
         super().__init__()
+        self.blacklist_service = blacklist_service
+        self.queue_service = queue_service
 
     async def create_user(
         self,
@@ -70,6 +85,10 @@ class UserService(BaseService):
                 ):
                     raise UserAlreadyExistsError(f"Email {data.email} already exists")
                 user.email = data.email
+                # Changing the email means it needs to be re-verified — otherwise a
+                # stolen short-lived access token could be used to silently repoint
+                # password-reset emails to an attacker's inbox.
+                user.email_verified = False
 
             if data.first_name:
                 user.first_name = data.first_name
@@ -139,3 +158,34 @@ class UserService(BaseService):
             raise InvalidPasswordError(f"Password validation error: {str(e)}") from e
         except Exception as e:
             raise UserError(f"Failed to change password: {str(e)}") from e
+
+    async def request_email_verification(self, user: User) -> None:
+        """Enqueue a verification email for the given (authenticated) user."""
+        if not user.email:
+            raise UserError("No email address on file", code="no_email")
+
+        token = generate_action_token(
+            user, "email_verification", EMAIL_VERIFICATION_TOKEN_LIFETIME
+        )
+        try:
+            await self.queue_service.enqueue(
+                "send_verification_email", str(user.id), token
+            )
+        except Exception:
+            logger.warning("Failed to enqueue verification email for %s", user.email)
+
+    async def confirm_email_verification(self, token: str) -> None:
+        """Verify an email-verification token and mark the email as verified."""
+        user_id, jti, exp = await verify_action_token(
+            token, "email_verification", self.blacklist_service
+        )
+        try:
+            user = await User.objects.aget(id=user_id)
+        except User.DoesNotExist:
+            raise InvalidTokenError() from None
+
+        user.email_verified = True
+        await user.asave()
+
+        # Single-use: blacklist immediately so the same link can't be replayed.
+        await self.blacklist_service.add_to_blacklist(jti, exp)

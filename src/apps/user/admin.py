@@ -14,8 +14,9 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
         "last_name",
         "is_active",
         "is_staff",
+        "email_verified",
     )
-    list_filter = ("is_active", "is_staff", "is_superuser")
+    list_filter = ("is_active", "is_staff", "is_superuser", "email_verified")
     search_fields = ("phone", "email", "first_name", "last_name")
     ordering = ("-date_joined",)
 
@@ -29,6 +30,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
                     "last_name",
                     "middle_name",
                     "email",
+                    "email_verified",
                     "profile_image",
                 )
             },

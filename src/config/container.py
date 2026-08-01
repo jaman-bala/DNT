@@ -12,8 +12,14 @@ class Container:
         self.s3_service = S3Service()
         self.queue_service = QueueService()
         self.blacklist_service = BlacklistService()
-        self.user_service = UserService()
-        self.auth_service = AuthService(blacklist_service=self.blacklist_service)
+        self.user_service = UserService(
+            blacklist_service=self.blacklist_service,
+            queue_service=self.queue_service,
+        )
+        self.auth_service = AuthService(
+            blacklist_service=self.blacklist_service,
+            queue_service=self.queue_service,
+        )
 
 
 container = Container()
