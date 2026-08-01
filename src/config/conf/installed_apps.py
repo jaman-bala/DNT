@@ -7,6 +7,7 @@ THIRD_PARTY_APPS = [
 
 MY_APPS = [
     "apps.user",
+    "apps.note",
 ]
 
 INSTALLED_APPS = [

@@ -33,6 +33,7 @@ src/
 │   │   ├── utils/           # ratelimit.py — переиспользуемый rate limiter
 │   │   ├── worker.py        # Точка входа arq-воркера + фоновые задачи
 │   │   └── tests/           # Тесты модуля
+│   ├── note/                # Пример второго домена (см. "Добавление своего домена" ниже)
 │   └── user/                # Модуль управления пользователями
 │       ├── controllers/     # API эндпоинты (v1/)
 │       ├── services/        # Бизнес-логика (Async)
@@ -92,7 +93,8 @@ docker compose exec app python src/manage.py migrate
 
 ## 🔧 API Эндпоинты
 
-Документация Swagger доступна по адресу: http://localhost:8000/api/v1/docs
+Интерактивная документация (Scalar) доступна по адресу: http://localhost:8000/api/v1/docs
+(рендерится через `config/openapi.py::Scalar` вместо стандартного Swagger UI из django-ninja).
 
 ### Примеры запросов
 
@@ -206,6 +208,35 @@ docker compose logs -f worker
 
 Пример (`log_event`) уже вызывается при регистрации пользователя — используйте его как
 шаблон для реальных задач (письма, обработка загруженных файлов и т.п.).
+
+## 🧩 Добавление своего домена
+
+Всё, что связано с `apps/user`, специфично для auth (JWT, хеширование пароля, уникальный
+телефон) — не лучший образец для копирования под свою модель. Вместо этого используйте
+`apps/note` — минимальный CRUD-ресурс "заметка, принадлежащая пользователю", который
+показывает тот же паттерн Controller → Service → Model без auth-специфики:
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/notes/" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Shopping list", "content": "Milk, eggs, bread"}'
+
+curl "http://localhost:8000/api/v1/notes/" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+Чтобы добавить свой домен — скопируйте структуру `src/apps/note/` (`models/`, `dto/`,
+`services/`, `controllers/v1/`, `exceptions.py`, `admin.py`, `tests/`) и переименуйте:
+
+1. Модель наследуется от `BaseModel` (`config/base/base_model.py`) — UUID/timestamps/
+   soft-delete уже включены.
+2. Сервис — обычный класс с async-методами, каждый метод сам проверяет владельца
+   (`owner=user` в фильтре), а не полагается на 403 — так по чужому `note_id` нельзя
+   узнать, существует ли он вообще (тот же принцип, что и в password-reset).
+3. Зарегистрируйте сервис в `config/container.py`, роутер и обработчики исключений —
+   в `config/api.py`, приложение — в `config/conf/installed_apps.py::MY_APPS`.
+4. `uv run python src/manage.py makemigrations <your_app>`.
 
 ## 🧪 Тестирование и линтинг
 
