@@ -199,6 +199,18 @@ wheels = [
 ]
 
 [[package]]
+name = "dj-cache-panel"
+version = "0.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e0/ef/b03a9eede668f95a50698160721b0ec86381de873534628d62f291449f04/dj_cache_panel-0.4.0.tar.gz", hash = "sha256:7760b12045abfecebbd8552459e2ab6fd5580ad49f936e0d2dbe44d85888c655", size = 35084, upload-time = "2026-03-23T21:38:49.749Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a8/c5/c5daf17625eaead35027a4e37cf4f5074dee6e955beefa8b78f664de5f83/dj_cache_panel-0.4.0-py3-none-any.whl", hash = "sha256:d0afd5f3c68e568093f49eb49bccf28e2c04ae23e8269cf917e8fdbc7989f353", size = 29675, upload-time = "2026-03-23T21:38:48.221Z" },
+]
+
+[[package]]
 name = "dj-control-room"
 version = "1.5.0"
 source = { registry = "https://pypi.org/simple" }
@@ -212,6 +224,9 @@ wheels = [
 ]
 
 [package.optional-dependencies]
+cache = [
+    { name = "dj-cache-panel" },
+]
 redis = [
     { name = "dj-redis-panel" },
 ]
@@ -424,7 +439,7 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "bandit" },
-    { name = "dj-control-room", extra = ["redis", "urls"] },
+    { name = "dj-control-room", extra = ["cache", "redis", "urls"] },
     { name = "django-debug-toolbar" },
     { name = "django-extensions" },
     { name = "factory-boy" },
@@ -461,7 +476,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "bandit", extras = ["toml"], specifier = ">=1.7.9" },
-    { name = "dj-control-room", extras = ["urls", "redis"], specifier = ">=1.5.0" },
+    { name = "dj-control-room", extras = ["urls", "redis", "cache"], specifier = ">=1.5.0" },
     { name = "django-debug-toolbar", specifier = ">=4.2.0" },
     { name = "django-extensions", specifier = ">=3.2.3" },
     { name = "factory-boy", specifier = ">=3.3.0" },

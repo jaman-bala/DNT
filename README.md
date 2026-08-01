@@ -21,7 +21,7 @@
     - **ruff**: Быстрый линтер и форматировщик.
     - **pytest**: Полноценное тестирование с покрытием.
 - **UI**: Кастомизированная админка на базе **Django Unfold**.
-- **Django Control Room** (dev-only): панели интроспекции URL-ов и Redis в админке + опциональный MCP-эндпоинт для AI-агентов.
+- **Django Control Room** (dev-only): панели интроспекции URL-ов, Redis и кэша в админке + опциональный MCP-эндпоинт для AI-агентов.
 
 ## 📁 Структура проекта
 
@@ -246,20 +246,25 @@ curl "http://localhost:8000/api/v1/notes/" \
 автоопределение DRF-сериализаторов. [dj-redis-panel](https://django-control-room.github.io/dj-redis-panel/)
 даёт то же самое для Redis — просмотр ключей всех типов (string/list/set/hash/sorted set),
 TTL, память, поиск по паттерну — уже настроен на тот же Redis, что использует кэш/rate
-limiting/arq (`config/conf/control_room.py::DJ_REDIS_PANEL_SETTINGS`). Оба подключены так
-же, как `django-debug-toolbar` — пакеты и приложения активны только при `DEBUG=True`, в
-проде их просто нет.
+limiting/arq (`config/conf/control_room.py::DJ_REDIS_PANEL_SETTINGS`). [dj-cache-panel](https://django-control-room.github.io/dj-cache-panel/)
+даёт тот же просмотр, но через абстракцию Django `cache` (с учётом `KEY_PREFIX`) — удобно
+искать именно те ключи, что видны в коде (`blacklist:...`, `ratelimit:...`), а не сырые
+Redis-ключи с префиксом. Все три подключены так же, как `django-debug-toolbar` — пакеты и
+приложения активны только при `DEBUG=True`, в проде их просто нет.
 
 Открой (залогинившись как staff-пользователь):
 
 ```
 http://localhost:8000/admin/dj-urls-panel/    # список и детали URL
-http://localhost:8000/admin/dj-redis-panel/   # ключи Redis
+http://localhost:8000/admin/dj-redis-panel/   # ключи Redis (сырые)
+http://localhost:8000/admin/dj-cache-panel/   # ключи через Django cache API
 http://localhost:8000/admin/dj-control-room/  # общий дашборд
 ```
 
-По умолчанию `ALLOW_KEY_DELETE=False` для Redis-панели — редактировать/смотреть TTL можно,
-удалять ключи из общего dev-инстанса — нет (поменяйте в `DJ_REDIS_PANEL_SETTINGS`, если нужно).
+По умолчанию удаление/flush отключены на обеих панелях (`ALLOW_KEY_DELETE=False` для Redis,
+`abilities.delete_key/flush_cache=False` для Cache) — это общий dev-инстанс, редактировать
+и смотреть TTL можно, стирать данные из-под rate limiting/blacklist — нет. Поменяйте в
+`DJ_REDIS_PANEL_SETTINGS`/`DJ_CACHE_PANEL_SETTINGS`, если нужно иначе.
 
 Тема подстроена под Django Unfold (`config/conf/control_room.py`).
 

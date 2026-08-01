@@ -15,6 +15,7 @@ if settings.DEBUG:
     urlpatterns += [
         path("admin/dj-urls-panel/", include("dj_urls_panel.urls")),
         path("admin/dj-redis-panel/", include("dj_redis_panel.urls")),
+        path("admin/dj-cache-panel/", include("dj_cache_panel.urls")),
         path("admin/dj-control-room/", include("dj_control_room.urls")),
     ]
 

@@ -29,3 +29,18 @@ DJ_REDIS_PANEL_SETTINGS = {
         },
     },
 }
+
+# https://django-control-room.github.io/dj-cache-panel/ — reads settings.CACHES
+# directly, no INSTANCES to declare. Same reasoning as DJ_REDIS_PANEL_SETTINGS
+# above: this is the same shared Redis behind rate limiting/blacklist, so lock
+# down delete/flush on it rather than leaving the backend's full ability set on.
+DJ_CACHE_PANEL_SETTINGS = {
+    "CACHES": {
+        "default": {
+            "abilities": {
+                "delete_key": False,
+                "flush_cache": False,
+            },
+        },
+    },
+}
