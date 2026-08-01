@@ -1,12 +1,20 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from unfold.admin import ModelAdmin
+from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
 
 from apps.user.models.users import User
 
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin, ModelAdmin):
+    # Unfold's themed forms — without these, UserAdmin falls back to plain
+    # Django's UserChangeForm/UserCreationForm, which work but look
+    # unstyled/out of place next to the rest of the Unfold-skinned admin.
+    form = UserChangeForm
+    add_form = UserCreationForm
+    change_password_form = AdminPasswordChangeForm
+
     list_display = (
         "phone",
         "email",
@@ -21,7 +29,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
     ordering = ("-date_joined",)
 
     fieldsets = (
-        (None, {"fields": ("phone",)}),
+        (None, {"fields": ("phone", "password")}),
         (
             "Personal info",
             {
