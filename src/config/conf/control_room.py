@@ -1,3 +1,4 @@
+from config.conf.cache import REDIS_URL
 from config.utils import env
 
 # https://django-control-room.github.io/dj-control-room/configuration/
@@ -13,3 +14,18 @@ DJ_CONTROL_ROOM_SETTINGS = {
 
 # https://django-control-room.github.io/dj-urls-panel/configuration/
 DJ_URLS_PANEL_SETTINGS: dict = {}
+
+# https://django-control-room.github.io/dj-redis-panel/
+DJ_REDIS_PANEL_SETTINGS = {
+    # Safe read-mostly defaults for a shared dev instance also used by the
+    # cache, rate limiter, and arq queue — don't let the panel delete keys.
+    "ALLOW_KEY_DELETE": False,
+    "ALLOW_KEY_EDIT": True,
+    "ALLOW_TTL_UPDATE": True,
+    "INSTANCES": {
+        "default": {
+            "description": "DNT Redis (cache / rate limiting / arq)",
+            "url": REDIS_URL,
+        },
+    },
+}

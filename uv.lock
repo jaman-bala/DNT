@@ -212,6 +212,9 @@ wheels = [
 ]
 
 [package.optional-dependencies]
+redis = [
+    { name = "dj-redis-panel" },
+]
 urls = [
     { name = "dj-urls-panel" },
 ]
@@ -226,6 +229,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/e3/cf/4b9ffa280c11187c7e96de6dc83875552a6d69f536ae8a7a72426271c26d/dj_control_room_base-1.4.0.tar.gz", hash = "sha256:475b0086fed12c45e0e9fb9538d27030665c6d3d56a4a1f1ba9d00b2637e295d", size = 136047, upload-time = "2026-07-31T03:39:45.46Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/22/7a/b8cfd2998faae8bfa83faadb20a9376e35d1d10ee6c83cc45e63d97d4e12/dj_control_room_base-1.4.0-py3-none-any.whl", hash = "sha256:719b6f283faba6d7347137c9b922154ebfb89d97310f0c9ff4c2cefdd07f257f", size = 147295, upload-time = "2026-07-31T03:39:44.155Z" },
+]
+
+[[package]]
+name = "dj-redis-panel"
+version = "0.8.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "redis" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/12/03/d34c69d9118234d8907254ed5c4da5516e39eabfac6b1882c20d90c65c61/dj_redis_panel-0.8.2.tar.gz", hash = "sha256:025e65292c4866476fa2d8cb5d8d8b0c18820a656eed0982ffc2336d26604c8f", size = 64664, upload-time = "2026-03-07T00:44:23.304Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d6/48/31c85c1267e16b560cf808e23786edc2f662a6e6c3605087ed209050d25f/dj_redis_panel-0.8.2-py3-none-any.whl", hash = "sha256:ffc0a564fc1afbf8a48cee03c58a234b718d8e344c01e35ecfe971352a8a4390", size = 47792, upload-time = "2026-03-07T00:44:21.002Z" },
 ]
 
 [[package]]
@@ -408,7 +424,7 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "bandit" },
-    { name = "dj-control-room", extra = ["urls"] },
+    { name = "dj-control-room", extra = ["redis", "urls"] },
     { name = "django-debug-toolbar" },
     { name = "django-extensions" },
     { name = "factory-boy" },
@@ -445,7 +461,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "bandit", extras = ["toml"], specifier = ">=1.7.9" },
-    { name = "dj-control-room", extras = ["urls"], specifier = ">=1.5.0" },
+    { name = "dj-control-room", extras = ["urls", "redis"], specifier = ">=1.5.0" },
     { name = "django-debug-toolbar", specifier = ">=4.2.0" },
     { name = "django-extensions", specifier = ">=3.2.3" },
     { name = "factory-boy", specifier = ">=3.3.0" },

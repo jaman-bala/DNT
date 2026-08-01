@@ -35,5 +35,6 @@ if DEBUG:
         # Dev-only by design: see config/conf/control_room.py.
         "dj_control_room_base",
         "dj_urls_panel",
+        "dj_redis_panel",
         "dj_control_room",
     ]

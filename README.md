@@ -21,7 +21,7 @@
     - **ruff**: Быстрый линтер и форматировщик.
     - **pytest**: Полноценное тестирование с покрытием.
 - **UI**: Кастомизированная админка на базе **Django Unfold**.
-- **Django Control Room** (dev-only): панель интроспекции URL-ов в админке + опциональный MCP-эндпоинт для AI-агентов.
+- **Django Control Room** (dev-only): панели интроспекции URL-ов и Redis в админке + опциональный MCP-эндпоинт для AI-агентов.
 
 ## 📁 Структура проекта
 
@@ -243,15 +243,23 @@ curl "http://localhost:8000/api/v1/notes/" \
 
 [dj-urls-panel](https://django-control-room.github.io/dj-urls-panel/) даёт интроспекцию
 всех URL проекта прямо из админки: поиск по паттерну/имени/вьюхе, детали каждого урла,
-автоопределение DRF-сериализаторов. Подключён так же, как `django-debug-toolbar` —
-пакет и приложения активны только при `DEBUG=True`, в проде их просто нет.
+автоопределение DRF-сериализаторов. [dj-redis-panel](https://django-control-room.github.io/dj-redis-panel/)
+даёт то же самое для Redis — просмотр ключей всех типов (string/list/set/hash/sorted set),
+TTL, память, поиск по паттерну — уже настроен на тот же Redis, что использует кэш/rate
+limiting/arq (`config/conf/control_room.py::DJ_REDIS_PANEL_SETTINGS`). Оба подключены так
+же, как `django-debug-toolbar` — пакеты и приложения активны только при `DEBUG=True`, в
+проде их просто нет.
 
 Открой (залогинившись как staff-пользователь):
 
 ```
 http://localhost:8000/admin/dj-urls-panel/    # список и детали URL
+http://localhost:8000/admin/dj-redis-panel/   # ключи Redis
 http://localhost:8000/admin/dj-control-room/  # общий дашборд
 ```
+
+По умолчанию `ALLOW_KEY_DELETE=False` для Redis-панели — редактировать/смотреть TTL можно,
+удалять ключи из общего dev-инстанса — нет (поменяйте в `DJ_REDIS_PANEL_SETTINGS`, если нужно).
 
 Тема подстроена под Django Unfold (`config/conf/control_room.py`).
 

@@ -14,6 +14,7 @@ if settings.DEBUG:
     # 404 these before the resolver ever reaches them.
     urlpatterns += [
         path("admin/dj-urls-panel/", include("dj_urls_panel.urls")),
+        path("admin/dj-redis-panel/", include("dj_redis_panel.urls")),
         path("admin/dj-control-room/", include("dj_control_room.urls")),
     ]
 
