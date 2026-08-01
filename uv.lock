@@ -475,7 +475,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "bandit", extras = ["toml"], specifier = ">=1.7.9" },
+    { name = "bandit", extras = ["toml"], specifier = ">=1.9.4" },
     { name = "dj-control-room", extras = ["urls", "redis", "cache"], specifier = ">=1.5.0" },
     { name = "django-debug-toolbar", specifier = ">=4.2.0" },
     { name = "django-extensions", specifier = ">=3.2.3" },
