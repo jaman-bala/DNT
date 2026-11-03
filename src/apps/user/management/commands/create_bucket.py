@@ -5,11 +5,11 @@ from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
-    help = "Create MinIO bucket for media files"
+    help = "Create the S3 (SeaweedFS) bucket for media files"
 
     def handle(self, *args, **options):
         try:
-            # Initialize MinIO client
+            # Initialize S3 client (SeaweedFS S3 gateway)
             s3_client = boto3.client(
                 "s3",
                 endpoint_url=settings.AWS_S3_ENDPOINT_URL,

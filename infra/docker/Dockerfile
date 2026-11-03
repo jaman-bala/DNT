@@ -56,7 +56,7 @@ USER appuser
 EXPOSE 8000
 
 # Development command with auto-reload
-CMD ["sh", "-c", "python src/manage.py migrate && python src/manage.py create_minio_bucket && gunicorn config.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers 3"]
+CMD ["sh", "-c", "python src/manage.py migrate && python src/manage.py create_bucket && gunicorn config.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers 3"]
 
 # Production stage
 FROM base AS production
@@ -79,4 +79,4 @@ EXPOSE 8000
 RUN python src/manage.py collectstatic --noinput
 
 # Production command with migrations and gunicorn
-CMD ["sh", "-c", "python src/manage.py migrate && python src/manage.py create_minio_bucket && gunicorn config.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers 3"]
+CMD ["sh", "-c", "python src/manage.py migrate && python src/manage.py create_bucket && gunicorn config.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers 3"]

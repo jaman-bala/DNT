@@ -8,7 +8,7 @@ from ninja.files import UploadedFile
 
 
 class S3Service:
-    """Service for handling S3/MinIO operations."""
+    """Service for handling S3 (SeaweedFS) operations."""
 
     def __init__(self):
         self.endpoint_url = settings.AWS_S3_ENDPOINT_URL
@@ -68,6 +68,6 @@ class S3Service:
             self.client.create_bucket(Bucket=self.bucket_name)
 
     def get_file_url(self, filename: str) -> str:
-        """Generate public URL for a file in S3/MinIO."""
+        """Generate public URL for a file in S3 (SeaweedFS)."""
         endpoint = self.endpoint_url.rstrip("/")
         return f"{endpoint}/{self.bucket_name}/{filename}"

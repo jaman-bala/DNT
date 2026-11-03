@@ -14,7 +14,7 @@
 - **Password reset / Email verification**: одноразовые JWT-токены (`token_type` + blacklist), письма уходят через фоновую очередь.
 - **Rate limiting**: встроенная защита от брутфорса на `/auth/login`, `/auth/register`, `/auth/refresh` и `/common/upload`.
 - **Фоновые задачи**: очередь на **arq** (Redis) для асинхронных джобов (email, обработка файлов и т.п.).
-- **Docker Стек**: PostgreSQL, Redis, MinIO, arq worker.
+- **Docker Стек**: PostgreSQL, Redis, SeaweedFS (S3), arq worker.
 - **CI/CD**: GitHub Actions (lint, тесты, bandit) + Dependabot для автоматического обновления зависимостей.
 - **Инструментарий**: 
     - **uv**: Современный менеджер пакетов и окружения.

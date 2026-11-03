@@ -65,7 +65,7 @@ class UploadEndpointTestCase(TestCase):
 
         with patch(
             "apps.common.services.s3_service.S3Service.upload_file",
-            new=AsyncMock(return_value="http://minio/media/uploads/photo.jpg"),
+            new=AsyncMock(return_value="http://seaweedfs/media/uploads/photo.jpg"),
         ):
             response = self.client.post(
                 "/api/v1/common/upload",
@@ -74,4 +74,6 @@ class UploadEndpointTestCase(TestCase):
             )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["url"], "http://minio/media/uploads/photo.jpg")
+        self.assertEqual(
+            response.json()["url"], "http://seaweedfs/media/uploads/photo.jpg"
+        )

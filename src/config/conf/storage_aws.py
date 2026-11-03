@@ -5,10 +5,10 @@ from config.utils import env
 
 USE_AWS = env("USE_AWS", default=False, is_bool=True)
 
-# MinIO settings (always available for file uploads)
-AWS_ACCESS_KEY_ID = env("AWS_S3_ACCESS_KEY_ID", default="minioadmin")
-AWS_SECRET_ACCESS_KEY = env("AWS_S3_SECRET_ACCESS_KEY", default="minioadmin")
-AWS_S3_ENDPOINT_URL = env("AWS_S3_ENDPOINT_URL", default="http://minio:9000")
+# SeaweedFS S3 settings (always available for file uploads)
+AWS_ACCESS_KEY_ID = env("AWS_S3_ACCESS_KEY_ID", default="seaweedfs")
+AWS_SECRET_ACCESS_KEY = env("AWS_S3_SECRET_ACCESS_KEY", default="seaweedfs")
+AWS_S3_ENDPOINT_URL = env("AWS_S3_ENDPOINT_URL", default="http://seaweedfs:8333")
 AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME", default="us-east-1")
 AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME", default="media")
 
@@ -17,9 +17,9 @@ if USE_AWS:
     STATIC_URL = "static/"
     MEDIA_URL = "media/"
 
-    AWS_ACCESS_KEY_ID = env("AWS_S3_ACCESS_KEY_ID", default="minioadmin")
-    AWS_SECRET_ACCESS_KEY = env("AWS_S3_SECRET_ACCESS_KEY", default="minioadmin")
-    AWS_S3_ENDPOINT_URL = env("AWS_S3_ENDPOINT_URL", default="http://minio:9000")
+    AWS_ACCESS_KEY_ID = env("AWS_S3_ACCESS_KEY_ID", default="seaweedfs")
+    AWS_SECRET_ACCESS_KEY = env("AWS_S3_SECRET_ACCESS_KEY", default="seaweedfs")
+    AWS_S3_ENDPOINT_URL = env("AWS_S3_ENDPOINT_URL", default="http://seaweedfs:8333")
     AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME", default=None)
     AWS_S3_USE_SSL = env("AWS_S3_USE_SSL", default=False, is_bool=True)
     AWS_S3_VERIFY = env("AWS_S3_VERIFY", default=False, is_bool=True)
@@ -40,9 +40,9 @@ if USE_AWS:
     AWS_S3_STATIC_QUERYSTRING_AUTH = env(
         "AWS_S3_STATIC_QUERYSTRING_AUTH", default=False, is_bool=True
     )
-    MINIO_BASE_DOMAIN = env("MINIO_BASE_DOMAIN", default="0.0.0.0:9000")
+    SEAWEEDFS_BASE_DOMAIN = env("SEAWEEDFS_BASE_DOMAIN", default="0.0.0.0:8333")
 
-    AWS_S3_CUSTOM_DOMAIN = env("MINIO_S3_CUSTOM_DOMAIN", default=None)
+    AWS_S3_CUSTOM_DOMAIN = env("SEAWEEDFS_S3_CUSTOM_DOMAIN", default=None)
     STORAGES: dict[str, dict[str, Any]] = {
         # Media file management
         "default": {
@@ -65,7 +65,7 @@ if USE_AWS:
             },
         },
     }
-    # Enable custom domain for minio storage
+    # Enable custom domain for SeaweedFS storage
 
     ENABLE_STORAGE_CUSTOM_DOMAIN = env(
         "ENABLE_STORAGE_CUSTOM_DOMAIN", default=False, is_bool=True
@@ -73,10 +73,10 @@ if USE_AWS:
 
     if ENABLE_STORAGE_CUSTOM_DOMAIN:
         STORAGES["default"]["OPTIONS"]["custom_domain"] = (
-            f"{MINIO_BASE_DOMAIN}{MEDIA_URL}".rstrip("/")
+            f"{SEAWEEDFS_BASE_DOMAIN}{MEDIA_URL}".rstrip("/")
         )
         STORAGES["staticfiles"]["OPTIONS"]["custom_domain"] = (
-            f"{MINIO_BASE_DOMAIN}{STATIC_URL}".rstrip("/")
+            f"{SEAWEEDFS_BASE_DOMAIN}{STATIC_URL}".rstrip("/")
         )
 
 else:

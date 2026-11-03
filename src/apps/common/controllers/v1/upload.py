@@ -56,7 +56,7 @@ async def upload_file(
     folder: UploadFolder = "uploads",
 ):
     """
-    Universal endpoint to upload files to S3/MinIO and get a URL.
+    Universal endpoint to upload files to S3 (SeaweedFS) and get a URL.
     """
     await enforce_rate_limit(
         request,
